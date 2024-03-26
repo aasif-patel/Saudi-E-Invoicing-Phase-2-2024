@@ -5,6 +5,8 @@ app_description = "Saudi Zatca phase-2 implementation according to zatca 2024 do
 app_email = "support@ERPGulf.com"
 app_license = "mit"
 
+#This is just a comment
+
 from frappe import _
 from . import __version__ as app_version
 # import frappe
