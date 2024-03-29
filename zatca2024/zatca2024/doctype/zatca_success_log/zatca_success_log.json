@@ -8,11 +8,14 @@
  "engine": "InnoDB",
  "field_order": [
   "title",
-  "message",
-  "zatca_response",
-  "invoice_number",
   "time",
-  "uuid"
+  "column_break_dijba",
+  "status",
+  "invoice_number",
+  "section_break_8wbhz",
+  "uuid",
+  "message",
+  "zatca_response"
  ],
  "fields": [
   {
@@ -20,37 +23,61 @@
    "fieldtype": "Data",
    "in_list_view": 1,
    "label": "Title",
+   "read_only": 1,
    "reqd": 1
   },
   {
    "fieldname": "message",
    "fieldtype": "Long Text",
-   "label": "Message"
+   "label": "Message",
+   "read_only": 1
   },
   {
    "fieldname": "invoice_number",
    "fieldtype": "Data",
-   "label": "Invoice Number"
+   "in_standard_filter": 1,
+   "label": "Invoice Number",
+   "read_only": 1
   },
   {
    "fieldname": "time",
    "fieldtype": "Data",
-   "label": "Time"
+   "label": "Time",
+   "read_only": 1
   },
   {
    "fieldname": "uuid",
-   "fieldtype": "Long Text",
-   "label": "UUID"
+   "fieldtype": "Small Text",
+   "label": "UUID",
+   "read_only": 1
   },
   {
    "fieldname": "zatca_response",
    "fieldtype": "Long Text",
-   "label": "zatca_response"
+   "label": "Zatca Response",
+   "read_only": 1
+  },
+  {
+   "fieldname": "status",
+   "fieldtype": "Data",
+   "in_list_view": 1,
+   "in_standard_filter": 1,
+   "label": "Status Code",
+   "read_only": 1
+  },
+  {
+   "fieldname": "column_break_dijba",
+   "fieldtype": "Column Break"
+  },
+  {
+   "fieldname": "section_break_8wbhz",
+   "fieldtype": "Section Break"
   }
  ],
+ "in_create": 1,
  "index_web_pages_for_search": 1,
  "links": [],
- "modified": "2024-12-25 15:43:11.217166",
+ "modified": "2024-03-29 11:04:01.389779",
  "modified_by": "Administrator",
  "module": "Zatca2024",
  "name": "Zatca Success log",
@@ -71,5 +98,10 @@
  ],
  "sort_field": "modified",
  "sort_order": "DESC",
- "states": []
+ "states": [
+  {
+   "color": "Green",
+   "title": "200"
+  }
+ ]
 }

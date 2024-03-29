@@ -328,6 +328,8 @@ def company_Data(invoice,sales_invoice_doc):
                 cbc_IdentificationCode.text = "SA"
                 cac_PartyTaxScheme = ET.SubElement(cac_Party_1, "cac:PartyTaxScheme")
                 cbc_CompanyID = ET.SubElement(cac_PartyTaxScheme, "cbc:CompanyID")
+                cbc_CompanyID.set("schemeAgencyID","ZZZ")
+                cbc_CompanyID.set("schemeID","VAT")
                 cbc_CompanyID.text = company_doc.tax_id
                 cac_TaxScheme = ET.SubElement(cac_PartyTaxScheme, "cac:TaxScheme")
                 cbc_ID_3 = ET.SubElement(cac_TaxScheme, "cbc:ID")

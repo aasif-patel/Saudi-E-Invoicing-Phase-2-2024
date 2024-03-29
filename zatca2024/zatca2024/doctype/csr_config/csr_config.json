@@ -1,0 +1,95 @@
+{
+ "actions": [],
+ "allow_rename": 1,
+ "creation": "2024-03-27 09:55:45.639315",
+ "default_view": "List",
+ "doctype": "DocType",
+ "editable_grid": 1,
+ "engine": "InnoDB",
+ "field_order": [
+  "common_name",
+  "serial_number",
+  "organization_identifier",
+  "organization_unit_name",
+  "organization_name",
+  "column_break_sv2g7",
+  "country_name",
+  "invoice_type",
+  "location_address",
+  "industry_business_category"
+ ],
+ "fields": [
+  {
+   "fieldname": "common_name",
+   "fieldtype": "Data",
+   "label": "Common Name"
+  },
+  {
+   "fieldname": "serial_number",
+   "fieldtype": "Data",
+   "label": "Serial Number"
+  },
+  {
+   "fieldname": "organization_identifier",
+   "fieldtype": "Data",
+   "label": "Organization Identifier"
+  },
+  {
+   "fieldname": "organization_unit_name",
+   "fieldtype": "Data",
+   "label": "Organization Unit Name"
+  },
+  {
+   "fieldname": "organization_name",
+   "fieldtype": "Data",
+   "label": "Organization Name"
+  },
+  {
+   "fieldname": "country_name",
+   "fieldtype": "Data",
+   "label": "Country Name"
+  },
+  {
+   "fieldname": "invoice_type",
+   "fieldtype": "Data",
+   "label": "Invoice Type"
+  },
+  {
+   "fieldname": "location_address",
+   "fieldtype": "Data",
+   "label": "Location Address"
+  },
+  {
+   "fieldname": "industry_business_category",
+   "fieldtype": "Data",
+   "label": "Industry Business Category"
+  },
+  {
+   "fieldname": "column_break_sv2g7",
+   "fieldtype": "Column Break"
+  }
+ ],
+ "index_web_pages_for_search": 1,
+ "issingle": 1,
+ "links": [],
+ "modified": "2024-03-27 10:08:59.541904",
+ "modified_by": "Administrator",
+ "module": "Zatca2024",
+ "name": "CSR Config",
+ "owner": "Administrator",
+ "permissions": [
+  {
+   "create": 1,
+   "delete": 1,
+   "email": 1,
+   "print": 1,
+   "read": 1,
+   "role": "System Manager",
+   "share": 1,
+   "write": 1
+  }
+ ],
+ "sort_field": "modified",
+ "sort_order": "DESC",
+ "states": []
+}

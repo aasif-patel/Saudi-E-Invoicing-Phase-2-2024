@@ -57,7 +57,7 @@ frappe.ui.form.on("Zatca setting", {
             },
             callback: function (r) {
                 if (!r.exc) {
-                    frm.save();
+                    // frm.save();
                     window.open(r.message.url);
                   
                 }

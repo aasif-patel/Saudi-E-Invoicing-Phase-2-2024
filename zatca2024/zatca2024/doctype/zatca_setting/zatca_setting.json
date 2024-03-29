@@ -6,19 +6,21 @@
  "engine": "InnoDB",
  "field_order": [
   "detailsotp_tab",
-  "zatca_invoice_enabled",
-  "background",
+  "sdk_root",
   "send_invoice_to_zatca",
   "create_csr",
+  "otp",
+  "column_break_otfs1",
+  "pih",
+  "zatca_invoice_enabled",
+  "background",
   "attach_xml_with_invoice",
   "attach_xml_with_qr_code",
   "attach_qr_code_doctype",
   "attach_e_invoice_send_status_with_invoice",
-  "otp",
-  "sdk_root",
-  "pih",
   "urls__api_endpoints_section",
   "select",
+  "column_break_vj1tq",
   "sandbox_url",
   "simulation_url",
   "production_url",
@@ -28,6 +30,7 @@
   "compliance_request_id",
   "zatca_compliance_check_check_all_options_below_section",
   "validation_type",
+  "column_break_jybs3",
   "sample_invoice_to_test",
   "check_compliance",
   "validation_results",
@@ -45,42 +48,42 @@
    "default": "0",
    "fieldname": "zatca_invoice_enabled",
    "fieldtype": "Check",
-   "label": "zatca_invoice_enabled"
+   "label": "ZATCA Invoice Enabled"
   },
   {
    "fieldname": "send_invoice_to_zatca",
    "fieldtype": "Select",
-   "label": "send invoice to zatca",
+   "label": "Send Invoice to ZATCA",
    "options": "Live\nBatches"
   },
   {
    "fieldname": "create_csr",
    "fieldtype": "Button",
-   "label": "create CSR"
+   "label": "Create CSR"
   },
   {
    "default": "0",
    "fieldname": "attach_xml_with_invoice",
    "fieldtype": "Check",
-   "label": "attach xml with invoice"
+   "label": "Attach xml with Invoice"
   },
   {
    "default": "0",
    "fieldname": "attach_xml_with_qr_code",
    "fieldtype": "Check",
-   "label": "attach xml with QR code"
+   "label": "Attach xml with QR code"
   },
   {
    "default": "0",
    "fieldname": "attach_qr_code_doctype",
    "fieldtype": "Check",
-   "label": "attach QR code doctype"
+   "label": "Attach QR code doctype"
   },
   {
    "default": "0",
    "fieldname": "attach_e_invoice_send_status_with_invoice",
    "fieldtype": "Check",
-   "label": "attach e_invoice send status with invoice"
+   "label": "Attach E-Invoice send status with Invoice"
   },
   {
    "fieldname": "otp",
@@ -95,25 +98,28 @@
   {
    "fieldname": "urls__api_endpoints_section",
    "fieldtype": "Section Break",
-   "label": "URLs / API EndPoints"
+   "label": "URLs / API Endpoints"
   },
   {
    "fieldname": "select",
    "fieldtype": "Select",
-   "label": "Select",
+   "label": "Select Environment",
    "options": "Simulation\nSandbox\nProduction"
   },
   {
+   "depends_on": "eval:doc.select==\"Sandbox\"",
    "fieldname": "sandbox_url",
    "fieldtype": "Data",
    "label": "Sandbox url"
   },
   {
+   "depends_on": "eval:doc.select == 'Simulation'",
    "fieldname": "simulation_url",
    "fieldtype": "Data",
    "label": "Simulation url"
   },
   {
+   "depends_on": "eval:doc.select == \"Production\"",
    "fieldname": "production_url",
    "fieldtype": "Data",
    "label": "Production url"
@@ -141,7 +147,7 @@
   {
    "fieldname": "compliance_request_id",
    "fieldtype": "Data",
-   "label": "compliance request id "
+   "label": "Compliance Request ID"
   },
   {
    "fieldname": "basic_auth_production",
@@ -157,7 +163,7 @@
    "default": "0",
    "fieldname": "background",
    "fieldtype": "Check",
-   "label": "Send e-invoice background"
+   "label": "Send e-invoice Background"
   },
   {
    "fieldname": "production_token_generation_section",
@@ -178,8 +184,7 @@
   {
    "fieldname": "sample_invoice_to_test",
    "fieldtype": "Data",
-   "label": "Sample Invoice Number to Test",
-   "options": "0001"
+   "label": "Sample Invoice Number to Test"
   },
   {
    "fieldname": "validation_results",
@@ -191,12 +196,24 @@
    "fieldname": "check_compliance",
    "fieldtype": "Button",
    "label": "Check Compliance"
+  },
+  {
+   "fieldname": "column_break_otfs1",
+   "fieldtype": "Column Break"
+  },
+  {
+   "fieldname": "column_break_vj1tq",
+   "fieldtype": "Column Break"
+  },
+  {
+   "fieldname": "column_break_jybs3",
+   "fieldtype": "Column Break"
   }
  ],
  "index_web_pages_for_search": 1,
  "issingle": 1,
  "links": [],
- "modified": "2024-12-27 08:45:09.248903",
+ "modified": "2024-03-27 17:23:30.943093",
  "modified_by": "Administrator",
  "module": "Zatca2024",
  "name": "Zatca setting",
