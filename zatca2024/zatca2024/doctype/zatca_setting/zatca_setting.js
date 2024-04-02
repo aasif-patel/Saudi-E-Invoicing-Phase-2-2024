@@ -54,6 +54,7 @@ frappe.ui.form.on("Zatca setting", {
             args: {
                 "invoice_number": frm.doc.sample_invoice_to_test,
             },
+            //This just a comment
             // callback: function (r) {
             //     if (!r.exc) {
             //         // frm.save();
