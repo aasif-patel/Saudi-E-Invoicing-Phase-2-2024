@@ -53,15 +53,14 @@ frappe.ui.form.on("Zatca setting", {
             method: "zatca2024.zatca2024.zatcasdkcode.zatca_Call_compliance",
             args: {
                 "invoice_number": frm.doc.sample_invoice_to_test,
-                "compliance_type": "1"
             },
-            callback: function (r) {
-                if (!r.exc) {
-                    // frm.save();
-                    window.open(r.message.url);
+            // callback: function (r) {
+            //     if (!r.exc) {
+            //         // frm.save();
+            //         window.open(r.message.url);
                   
-                }
-            },
+            //     }
+            // },
             
         });
     }

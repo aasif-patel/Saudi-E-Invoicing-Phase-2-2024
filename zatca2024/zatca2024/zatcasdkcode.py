@@ -1,39 +1,28 @@
-import frappe
-import os
+# import xml.etree.ElementTree as ElementTree
+# from frappe.utils import execute_in_shell
+# import xml.dom.minidom as minidom
+# from frappe.utils.data import get_time
+# from frappe.utils import now
+# import xml.etree.ElementTree as ET
+# from datetime import datetime
 # frappe.init(site="prod.erpgulf.com")
 # frappe.connect()
+# from lxml import etree
+# import sys
+
 from zatca2024.zatca2024.createxml import xml_tags,salesinvoice_data,invoice_Typecode_Simplified,invoice_Typecode_Standard,doc_Reference,additional_Reference ,company_Data,customer_Data,delivery_And_PaymentMeans,tax_Data,item_data,xml_structuring,invoice_Typecode_Compliance,delivery_And_PaymentMeans_for_Compliance,doc_Reference_compliance,get_tax_total_from_items
 from zatca2024.zatca2024.compliance import get_pwd,set_cert_path,create_compliance_x509,check_compliance
 import xml.etree.ElementTree as ET
 import base64
-from frappe.utils import now
+import frappe
+import os
 import re
-from lxml import etree
-import xml.dom.minidom as minidom
-from datetime import datetime
-import xml.etree.ElementTree as ET
 import json
-import xml.etree.ElementTree as ElementTree
-from frappe.utils import execute_in_shell
-import sys
 import frappe 
 import requests
-from frappe.utils.data import  get_time
 import base64
 import pyqrcode
 
-
-# def clean_up_certificate_string(certificate_string):
-#     return certificate_string.replace("-----BEGIN CERTIFICATE-----\n", "").replace("-----END CERTIFICATE-----", "").strip()
-
-# def get_auth_headers(certificate=None, secret=None):
-#     if certificate and secret:
-#         certificate_stripped = clean_up_certificate_string(certificate)
-#         certificate_base64 = base64.b64encode(certificate_stripped.encode()).decode()
-#         credentials = f"{certificate_base64}:{secret}"
-#         basic_token = base64.b64encode(credentials.encode()).decode()
-#         return basic_token       
-#     return {}
 
 def _execute_in_shell(cmd, verbose=False, low_priority=False, check_exit_code=False):
                 # using Popen instead of os.system - as recommended by python docs
@@ -76,7 +65,6 @@ def get_latest_generated_csr_file(folder_path='.'):
             # except Exception as e:
             #         frappe.throw(" error in get_latest_generated_csr_file: "+ str(e) )
 
-
 @frappe.whitelist(allow_guest=True)
 def generate_csr():
             try:
@@ -115,7 +103,6 @@ def generate_csr():
                     raise Exception("An error occurred: " + str(e))
             except Exception as e:
                     frappe.throw("Error occured in generate csr - "+ str(e) )
-
 
 def get_API_url(base_url):
     
@@ -172,8 +159,7 @@ def create_CSID():
                     settings.save(ignore_permissions=True)
                 except Exception as e:
                             frappe.throw("Error in csid formation: " + str(e))
-
-                    
+                                       
 def sign_invoice():
                 try:
                     settings=frappe.get_doc('Zatca setting')
@@ -193,11 +179,11 @@ def sign_invoice():
                     
                     match = re.search(r'ERROR', err.decode("utf-8"))
                     if match:
-                        frappe.throw(err)
+                        raise Exception(err)
 
                     match = re.search(r'ERROR', out.decode("utf-8"))
                     if match:
-                        frappe.throw(out)
+                        raise Exception(out)
                     
                     match = re.search(r'INVOICE HASH = (.+)', out.decode("utf-8"))
                     if match:
@@ -207,7 +193,8 @@ def sign_invoice():
                     else:
                         raise Exception(err,out)
                 except Exception as e:
-                    frappe.throw("Error Signing Invoice : " + str(e))
+                    err_msg = remove_header(e)
+                    frappe.throw("Error Signing Invoice : <br>" + err_msg)
             
 def generate_qr_code(signed_xmlfile_name,sales_invoice_doc,path_string):
                 try:
@@ -593,7 +580,6 @@ def attach_QR_Image_For_Clearance(xml_cleared,sales_invoice_doc):
                     except Exception as e:
                         frappe.throw("error in qrcode from cleared xml:  " + str(e) )
 
-
 @frappe.whitelist(allow_guest=True) 
 def zatca_Call(invoice_number, compliance_type="0"):
                     compliance_type = "0"
@@ -674,14 +660,12 @@ def zatca_Call_compliance(invoice_number, compliance_type="0"):
                     elif settings.validation_type == "Standard Debit Note":
                         compliance_type="6"
                     
-                    # frappe.throw("Compliance Type: " + compliance_type )
                     try:    
                             # create_compliance_x509()
                             # frappe.throw("Created compliance x509 certificate")
                             
                             if not frappe.db.exists("Sales Invoice", invoice_number):
                                 frappe.throw("Invoice Number is NOT Valid:  " + str(invoice_number))
-                            
                             
                             invoice= xml_tags()
                             invoice,uuid1,sales_invoice_doc=salesinvoice_data(invoice,invoice_number)
@@ -716,7 +700,6 @@ def zatca_Call_compliance(invoice_number, compliance_type="0"):
                             name = frappe.log_error(title='Zatca invoice call failed', message=frappe.get_traceback())
                             frappe.msgprint(f"Error Occure while Validating, <a href='/app/error-log/{name.name}' style='color: red;'>See Log</a>.", alert=1, indicator='red')
 
-                
 @frappe.whitelist(allow_guest=True)                  
 def zatca_Background(invoice_number):
                     
@@ -743,15 +726,6 @@ def zatca_Background(invoice_number):
                         
                     except Exception as e:
                         frappe.throw("Error in background call:  " + str(e) )
-                    
-# #                     # frappe.enqueue(
-#                     #         zatca_Call,
-#                     #         queue="short",
-#                     #         timeout=200,
-#                     #         invoice_number=invoice_number)
-#                     # frappe.msgprint("queued")
-
-
 
 @frappe.whitelist(allow_guest=True)          
 def zatca_Background_on_submit(doc, method=None):              
@@ -781,7 +755,36 @@ def zatca_Background_on_submit(doc, method=None):
                             
                         except Exception as e:
                             frappe.throw("Error in background call:  " + str(e) )
-                    
+
+def remove_header(text):
+    header = "b'********** Welcome to ZATCA E-Invoice Java SDK 3.3.2 *********************\r\nThis SDK uses Java to call the SDK (jar) passing it an invoice XML file.\r\nIt can take a Standard or Simplified XML, Credit Note, or Debit Note.\r\nIt returns if the validation is successful or shows errors where the XML validation fails.\r\nIt checks for syntax and content as well.\r\nYou can use the command (fatoora -help) for more information.\r\n\r\n*****************************************************************************\n\nn"
+    message = str(text)
+    if message.startswith("b'**********"):
+        message = message[len(header):]
+        if message.endswith("\n'"):
+            return message.removesuffix("\n'")
+        return message
+    return message
+
+
+# def clean_up_certificate_string(certificate_string):
+#     return certificate_string.replace("-----BEGIN CERTIFICATE-----\n", "").replace("-----END CERTIFICATE-----", "").strip()
+
+# def get_auth_headers(certificate=None, secret=None):
+#     if certificate and secret:
+#         certificate_stripped = clean_up_certificate_string(certificate)
+#         certificate_base64 = base64.b64encode(certificate_stripped.encode()).decode()
+#         credentials = f"{certificate_base64}:{secret}"
+#         basic_token = base64.b64encode(credentials.encode()).decode()
+#         return basic_token       
+#     return {}
+         
+# #                     # frappe.enqueue(
+#                     #         zatca_Call,
+#                     #         queue="short",
+#                     #         timeout=200,
+#                     #         invoice_number=invoice_number)
+#                     # frappe.msgprint("queued")
 # #                     # frappe.enqueue(
 #                     #         zatca_Call,
 #                     #         queue="short",
