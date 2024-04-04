@@ -1,0 +1,32 @@
+<cac:InvoiceLine>
+		<cbc:ID>{ITEM_IDX}</cbc:ID>
+		<cbc:InvoicedQuantity>{ITEM_QTY}</cbc:InvoicedQuantity>
+		<cbc:LineExtensionAmount currencyID="SAR">{ITEM_EXT_AMOUNT}</cbc:LineExtensionAmount>
+		<cac:TaxTotal>
+			<cbc:TaxAmount currencyID="SAR">{TAX_AMOUNT}</cbc:TaxAmount>
+			<cbc:RoundingAmount currencyID="SAR">{ROUNDING_AMOUNT}</cbc:RoundingAmount>
+		</cac:TaxTotal>
+		<cac:Item>
+			<cbc:Name>{ITEM_NAME}</cbc:Name>
+			<cac:ClassifiedTaxCategory>
+				<cbc:ID>{TAX_CAT}</cbc:ID>
+				<cbc:Percent>{TAX_PERC}</cbc:Percent>
+				<cac:TaxScheme>
+					<cbc:ID>{TAX_SCHEME}</cbc:ID>
+				</cac:TaxScheme>
+			</cac:ClassifiedTaxCategory>
+		</cac:Item>
+		<cac:Price>
+			<cbc:PriceAmount currencyID="SAR">{PRICE_AMOUNT}</cbc:PriceAmount>
+			<cbc:BaseQuantity>{BASE_QTY}</cbc:BaseQuantity>
+			<cac:AllowanceCharge>
+				<cbc:ChargeIndicator>{CHARGE}</cbc:ChargeIndicator>
+				{CHARGE_ALL_RESAONCODE}
+				{CHARGE_ALL_RESAON}
+				{MULTI_FACTOR_NUMERIC}
+				<cbc:Amount currencyID="SAR">{CHARGE_AMOUNT}</cbc:Amount>
+				<cbc:BaseAmount currencyID="SAR">{BASE_AMOUNT}</cbc:BaseAmount>				
+			</cac:AllowanceCharge>
+		</cac:Price>
+	</cac:InvoiceLine>
+    

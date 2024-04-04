@@ -1,0 +1,129 @@
+<Invoice
+	xmlns="urn:oasis:names:specification:ubl:schema:xsd:Invoice-2"
+	xmlns:cac="urn:oasis:names:specification:ubl:schema:xsd:CommonAggregateComponents-2"
+	xmlns:cbc="urn:oasis:names:specification:ubl:schema:xsd:CommonBasicComponents-2"
+    xmlns:ds="http://www.w3.org/2000/09/xmldsig#"
+    xmlns:ext="urn:oasis:names:specification:ubl:schema:xsd:CommonExtensionComponents-2"
+    xmlns:sac="urn:oasis:names:specification:ubl:schema:xsd:SignatureAggregateComponents-2"
+    xmlns:sbc="urn:oasis:names:specification:ubl:schema:xsd:SignatureBasicComponents-2"
+    xmlns:sig="urn:oasis:names:specification:ubl:schema:xsd:CommonSignatureComponents-2"
+    xmlns:xades="http://uri.etsi.org/01903/v1.3.2#">
+    {UBL_EXTN}
+	<cbc:ProfileID>reporting:1.0</cbc:ProfileID>
+	<cbc:ID>{INVOICE_NAME}</cbc:ID>
+	<cbc:UUID>{UUID}</cbc:UUID>
+	<cbc:IssueDate>{POSTING_DATE}</cbc:IssueDate>
+	<cbc:IssueTime>{POSTING_TIME}</cbc:IssueTime>
+	<cbc:InvoiceTypeCode {SUB_TYPECODE}>{INV_TYPECOD}</cbc:InvoiceTypeCode>
+	<cbc:Note languageID="en">{INV_NOTE}</cbc:Note>
+	<cbc:DocumentCurrencyCode listAgencyID="6" listID="ISO 4217 Alpha">{INV_CURRENCY}</cbc:DocumentCurrencyCode>
+	<cbc:TaxCurrencyCode listAgencyID="6" listID="ISO 4217 Alpha">{INV_CURRENCY}</cbc:TaxCurrencyCode>
+	{BILLING_REFERANCE}
+	<cac:AdditionalDocumentReference>
+    <cbc:ID>PIH</cbc:ID>
+    <cac:Attachment>
+        <cbc:EmbeddedDocumentBinaryObject mimeCode="text/plain">{PIH}</cbc:EmbeddedDocumentBinaryObject>
+    </cac:Attachment>
+	</cac:AdditionalDocumentReference>
+	<cac:AdditionalDocumentReference>
+        <cbc:ID>ICV</cbc:ID>
+        <cbc:UUID>{ICV_UUID}</cbc:UUID>
+    </cac:AdditionalDocumentReference>
+	{QR_CODE}
+	<cac:Signature>
+		<cbc:ID>urn:oasis:names:specification:ubl:signature:Invoice</cbc:ID>
+		<cbc:SignatureMethod>urn:oasis:names:specification:ubl:dsig:enveloped:xades</cbc:SignatureMethod>
+	</cac:Signature>
+	<cac:AccountingSupplierParty>
+		<cac:Party>
+			<cac:PartyIdentification>
+				<cbc:ID schemeID="CRN">{SP_PARTY_ID}</cbc:ID>
+			</cac:PartyIdentification>
+			<cac:PostalAddress>
+				<cbc:StreetName>{SP_STREET_NAME}</cbc:StreetName>
+				<cbc:AdditionalStreetName>{SP_ADD_STREET_NAME}</cbc:AdditionalStreetName>
+				<cbc:BuildingNumber>{SP_BUILDING_NO}</cbc:BuildingNumber>
+				<cbc:PlotIdentification>{SP_PLOT_ID}</cbc:PlotIdentification>
+				<cbc:CitySubdivisionName>{SP_CITY_SUBDIV}</cbc:CitySubdivisionName>
+				<cbc:CityName>{SP_CITY}</cbc:CityName>
+				<cbc:PostalZone>{SP_POSTALZONE}</cbc:PostalZone>
+				<cbc:CountrySubentity>{SP_COUNTRY_SUB}</cbc:CountrySubentity>
+				<cac:Country>
+					<cbc:IdentificationCode>{SP_COUNTRY_ABBR}</cbc:IdentificationCode>
+				</cac:Country>
+			</cac:PostalAddress>
+			<cac:PartyTaxScheme>
+				<cbc:CompanyID schemeAgencyID="ZZZ" schemeID="VAT">{COMPANY_VAT_NO}</cbc:CompanyID>
+				<cac:TaxScheme>
+					<cbc:ID schemeAgencyID="6" schemeID="UN/ECE 5153">VAT</cbc:ID>
+				</cac:TaxScheme>
+			</cac:PartyTaxScheme>
+			<cac:PartyLegalEntity>
+				<cbc:RegistrationName>{COMPANY_NAME}</cbc:RegistrationName>
+			</cac:PartyLegalEntity>
+		</cac:Party>
+	</cac:AccountingSupplierParty>
+	<cac:AccountingCustomerParty>
+		<cac:Party>
+			<cac:PostalAddress>
+				<cbc:StreetName>{CP_STREET_NAME}</cbc:StreetName>
+				<cbc:AdditionalStreetName>{CP_ADD_STREET_NAME}</cbc:AdditionalStreetName>
+				<cbc:BuildingNumber>{CP_BUILDING_NO}</cbc:BuildingNumber>
+				<cbc:PlotIdentification>{CP_PLOT_ID}</cbc:PlotIdentification>
+				<cbc:CitySubdivisionName>{CP_CITY_SUBDIV}</cbc:CitySubdivisionName>
+				<cbc:CityName>{CP_CITY}</cbc:CityName>
+				<cbc:PostalZone>{CP_POSTALZONE}</cbc:PostalZone>
+				<cbc:CountrySubentity>{CP_COUNTRY_SUB}</cbc:CountrySubentity>
+				<cac:Country>
+					<cbc:IdentificationCode>{CP_COUNTRY_ABBR}</cbc:IdentificationCode>
+				</cac:Country>
+			</cac:PostalAddress>
+			<cac:PartyTaxScheme>
+				<cbc:CompanyID schemeAgencyID="ZZZ" schemeID="VAT">{CUS_VAT_NO}</cbc:CompanyID>
+				<cac:TaxScheme>
+					<cbc:ID schemeAgencyID="6" schemeID="UN/ECE 5153">VAT</cbc:ID>
+				</cac:TaxScheme>
+			</cac:PartyTaxScheme>
+			<cac:PartyLegalEntity>
+				<cbc:RegistrationName>{CUSTOMER_NAME}</cbc:RegistrationName>
+			</cac:PartyLegalEntity>
+		</cac:Party>
+	</cac:AccountingCustomerParty>
+	<cac:Delivery>
+		<cbc:ActualDeliveryDate>{ACT_DELIVERY_DATE}</cbc:ActualDeliveryDate>
+		<cbc:LatestDeliveryDate>{LST_DELIVERY_DATE}</cbc:LatestDeliveryDate>
+	</cac:Delivery>
+	<cac:PaymentMeans>	
+		<cbc:PaymentMeansCode listID="UN/ECE 4461">{PYM_MEANS_CODE}</cbc:PaymentMeansCode>
+		{INSTRUCTION_NOTE}
+	</cac:PaymentMeans>
+	<cac:TaxTotal>
+		<cbc:TaxAmount currencyID="SAR">{TAX_AMOUNT}</cbc:TaxAmount>
+		<cac:TaxSubtotal>
+			<cbc:TaxableAmount currencyID="SAR">{TAXABLE_AMOUNT}</cbc:TaxableAmount>
+			<cbc:TaxAmount currencyID="SAR">{TAX_AMOUNT}</cbc:TaxAmount>
+			<cac:TaxCategory>
+				<cbc:ID>{TAX_CAT_ID}</cbc:ID>
+				<cbc:Percent>{TAX_PERC}</cbc:Percent>
+                {TAX_EXEMPT_RESAON}
+				<cac:TaxScheme>
+					<cbc:ID>{TAX_SCHEME}</cbc:ID>
+				</cac:TaxScheme>
+			</cac:TaxCategory>
+		</cac:TaxSubtotal>
+	</cac:TaxTotal>
+	<cac:TaxTotal>
+		<cbc:TaxAmount currencyID="SAR">{TAX_AMOUNT}</cbc:TaxAmount>
+	</cac:TaxTotal>
+	<cac:LegalMonetaryTotal>
+		<cbc:LineExtensionAmount currencyID="SAR">{LN_EXT_AMOUNT}</cbc:LineExtensionAmount>
+		<cbc:TaxExclusiveAmount currencyID="SAR">{TAX_EXC_AMOUNT}</cbc:TaxExclusiveAmount>
+		<cbc:TaxInclusiveAmount currencyID="SAR">{TAX_INC_AMOUNT}</cbc:TaxInclusiveAmount>
+		<cbc:AllowanceTotalAmount currencyID="SAR">{ALLOWANCE_AMOUNT}</cbc:AllowanceTotalAmount>
+		<cbc:ChargeTotalAmount currencyID="SAR">{CHARGE_AMOUNT}</cbc:ChargeTotalAmount>
+		<cbc:PrepaidAmount currencyID="SAR">{PRE_PAID_AMOUNT}</cbc:PrepaidAmount>
+		<cbc:PayableRoundingAmount currencyID="SAR">{PAYABLE_ROUNDING_AMOUNT}</cbc:PayableRoundingAmount>
+		<cbc:PayableAmount currencyID="SAR">{PAYABLE_AMOUNT}</cbc:PayableAmount>
+	</cac:LegalMonetaryTotal>
+    {LINE_ITEMS}
+</Invoice>

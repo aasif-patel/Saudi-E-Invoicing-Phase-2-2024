@@ -248,6 +248,9 @@ doc_events = {
         "before_cancel": "zatca2024.zatca2024.validations.before_save",
         "after_insert": "zatca2024.zatca2024.validations.duplicating_invoice",
         "on_submit": "zatca2024.zatca2024.zatcasdkcode.zatca_Background_on_submit"
+    },
+    "Country":{
+        "validate" : "zatca2024.zatca2024.validations.validate_country_code"
     }
 }
 doctype_js = {
