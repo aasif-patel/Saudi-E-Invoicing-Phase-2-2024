@@ -7,7 +7,7 @@ frappe.ui.form.on("Zatca setting", {
     },
     production_csid: function (frm) {
         frappe.call({
-            method: "zatca2024.zatca2024.zatcasdkcode.production_CSID",
+            method: "zatca2024.zatca2024.customizations.zatca.zatcasdkcode.production_CSID",
             args: {
               
             },
@@ -21,7 +21,7 @@ frappe.ui.form.on("Zatca setting", {
     },
     csid_attach: function (frm) {
             frappe.call({
-                method: "zatca2024.zatca2024.zatcasdkcode.create_CSID",
+                method: "zatca2024.zatca2024.customizations.zatca.zatcasdkcode.create_CSID",
                 args: {
                   
                 },
@@ -35,7 +35,7 @@ frappe.ui.form.on("Zatca setting", {
         },
     create_csr: function (frm) {
         frappe.call({
-            method: "zatca2024.zatca2024.zatcasdkcode.generate_csr",
+            method: "zatca2024.zatca2024.customizations.zatca.zatcasdkcode.generate_csr",
             args: {
               
             },
@@ -50,7 +50,7 @@ frappe.ui.form.on("Zatca setting", {
     check_compliance: function (frm) {
          
             frappe.call({
-            method: "zatca2024.zatca2024.zatcasdkcode.zatca_Call_compliance",
+            method: "zatca2024.zatca2024.customizations.zatca.zatcasdkcode.zatca_Call_compliance",
             args: {
                 "invoice_number": frm.doc.sample_invoice_to_test,
             },

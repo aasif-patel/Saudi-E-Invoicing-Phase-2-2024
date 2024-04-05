@@ -243,18 +243,18 @@ from . import __version__ as app_version
 # }
 doc_events = {
     "Sales Invoice": {
-        # "before_submit": "zatca2024.zatca2024.validations.zatca_done_or_not",
-        # "before_save": "zatca2024.zatca2024.validations.before_save",
-        "before_cancel": "zatca2024.zatca2024.validations.before_save",
-        "after_insert": "zatca2024.zatca2024.validations.duplicating_invoice",
-        "on_submit": "zatca2024.zatca2024.zatcasdkcode.zatca_Background_on_submit"
+        # "before_submit": "zatca2024.zatca2024.customizations.sales_invoice.sales_invoice.before_submit",
+        # "before_save": "zatca2024.zatca2024.customizations.sales_invoice.sales_invoice.before_save",
+        "before_cancel": "zatca2024.zatca2024.customizations.sales_invoice.sales_invoice.before_save",
+        "after_insert": "zatca2024.zatca2024.customizations.sales_invoice.sales_invoice.after_insert",
+        "on_submit": "zatca2024.zatca2024.customizations.sales_invoice.sales_invoice.on_submit",
     },
     "Country":{
-        "validate" : "zatca2024.zatca2024.validations.validate_country_code"
+        "validate" : "zatca2024.zatca2024.customizations.country.country.validate"
     }
 }
 doctype_js = {
-    "Sales Invoice" : "public/js/our_sales_invoice.js" ,
+    "Sales Invoice" : "zatca2024/customizations/sales_invoice/sales_invoice.js" ,
     }
 
 
