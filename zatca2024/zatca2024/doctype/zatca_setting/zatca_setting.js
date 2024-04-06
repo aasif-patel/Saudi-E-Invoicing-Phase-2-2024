@@ -1,5 +1,6 @@
 // Copyright (c) 2024, ERPGulf and contributors
 // For license information, please see license.txt
+// Added comment for server update
 
 frappe.ui.form.on("Zatca setting", {
 	refresh(frm) {
