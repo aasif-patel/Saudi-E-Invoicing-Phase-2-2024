@@ -3,6 +3,16 @@
 
 frappe.ui.form.on("Zatca setting", {
 	refresh(frm) {
+        if(frm.doc.sdk_root){
+            frm.add_custom_button(__("Update SDK Config"), function() {
+                frm.call({
+                    method:"zatca2024.zatca2024.customizations.zatca.file_manager.update_sdk_config",
+                    args: {
+                        "sdk_root": cur_frm.doc.sdk_root
+                    },
+                });
+            })
+        }
        
     },
     production_csid: function (frm) {
@@ -54,14 +64,11 @@ frappe.ui.form.on("Zatca setting", {
             args: {
                 "invoice_number": frm.doc.sample_invoice_to_test,
             },
-            //This just a comment
-            // callback: function (r) {
-            //     if (!r.exc) {
-            //         // frm.save();
-            //         window.open(r.message.url);
-                  
-            //     }
-            // },
+            callback: function (r) {
+                if (!r.exc) {
+                    // frm.save();                  
+                }
+            },
             
         });
     }

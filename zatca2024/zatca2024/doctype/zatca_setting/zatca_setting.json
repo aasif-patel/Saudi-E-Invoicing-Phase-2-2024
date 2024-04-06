@@ -91,6 +91,7 @@
    "label": "OTP"
   },
   {
+   "default": "NWZlY2ViNjZmZmM4NmYzOGQ5 NTI3ODZjNmQ2OTZjNzljMmRiYzIz OWRkNGU5MWI0NjcyOWQ3M2E yN2ZiNTdlOQ==",
    "fieldname": "pih",
    "fieldtype": "Data",
    "label": "PIH"
@@ -142,17 +143,20 @@
   {
    "fieldname": "basic_auth",
    "fieldtype": "Long Text",
-   "label": "Basic Auth from CSID"
+   "label": "Basic Auth from CSID",
+   "read_only": 1
   },
   {
    "fieldname": "compliance_request_id",
    "fieldtype": "Data",
-   "label": "Compliance Request ID"
+   "label": "Compliance Request ID",
+   "read_only": 1
   },
   {
    "fieldname": "basic_auth_production",
    "fieldtype": "Long Text",
-   "label": "Basic Auth from production"
+   "label": "Basic Auth from production",
+   "read_only": 1
   },
   {
    "fieldname": "sdk_root",
@@ -213,7 +217,7 @@
  "index_web_pages_for_search": 1,
  "issingle": 1,
  "links": [],
- "modified": "2024-03-27 17:23:30.943093",
+ "modified": "2024-04-06 15:24:28.094791",
  "modified_by": "Administrator",
  "module": "Zatca2024",
  "name": "Zatca setting",

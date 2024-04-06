@@ -1,17 +1,24 @@
-from zatca2024.zatca2024.customizations.zatca.createxml import xml_tags,salesinvoice_data,invoice_Typecode_Simplified,invoice_Typecode_Standard,doc_Reference,additional_Reference ,company_Data,customer_Data,delivery_And_PaymentMeans,tax_Data,item_data,xml_structuring,invoice_Typecode_Compliance,delivery_And_PaymentMeans_for_Compliance,doc_Reference_compliance,get_tax_total_from_items
+from zatca2024.zatca2024.customizations.zatca.createxml import xml_tags,salesinvoice_data,invoice_Typecode_Simplified,invoice_Typecode_Standard,doc_Reference,additional_Reference ,company_Data,customer_Data,delivery_And_PaymentMeans,tax_Data,item_data,invoice_Typecode_Compliance,delivery_And_PaymentMeans_for_Compliance,doc_Reference_compliance,get_tax_total_from_items
 from zatca2024.zatca2024.customizations.zatca.compliance import get_pwd,set_cert_path,create_compliance_x509,check_compliance
-from zatca2024.zatca2024.customizations.zatca.create_xml import create_plain_invoice
+from zatca2024.zatca2024.customizations.zatca.create_xml import create_plain_invoice, xml_structuring
+from zatca2024.zatca2024.customizations.zatca.file_manager import (
+    set_content,
+    get_latest_generated_csr_file, 
+    xml_base64_Decode,
+    remove_header)
 import xml.etree.ElementTree as ET
 import base64
 import frappe
 import os
 import re
 import json
-import frappe 
 import requests
-import base64
 import pyqrcode
 from frappe import _
+from frappe.utils import nowdate
+
+root_dir = frappe.get_site_path()
+sdk_config = frappe.get_module_path("zatca2024")+"/customizations/zatca/sdk_config.json"
 
 def _execute_in_shell(cmd, verbose=False, low_priority=False, check_exit_code=False):
     # using Popen instead of os.system - as recommended by python docs
@@ -22,9 +29,9 @@ def _execute_in_shell(cmd, verbose=False, low_priority=False, check_exit_code=Fa
     if isinstance(cmd, list):
         # ensure it's properly escaped; only a single string argument executes via shell
         cmd = shlex.join(cmd)
-        # process = subprocess.Popen(command_sign_invoice, shell=True, stdout=subprocess.PIPE, stderr=subprocess.PIPE, text=True, env=env_variables)               
+
     with tempfile.TemporaryFile() as stdout, tempfile.TemporaryFile() as stderr:
-        kwargs = {"shell": True, "stdout": stdout, "stderr": stderr}
+        kwargs = {"shell": True, "stdout": stdout, "stderr": stderr, "cwd":root_dir}
         if low_priority:
             kwargs["preexec_fn"] = lambda: os.nice(10)
         p = Popen(cmd, **kwargs)
@@ -44,29 +51,19 @@ def _execute_in_shell(cmd, verbose=False, low_priority=False, check_exit_code=Fa
         raise Exception("Command failed")
     return err, out
 
-def get_latest_generated_csr_file(folder_path='.'):
-    # try:
-    files = [f for f in os.listdir(folder_path) if f.startswith("generated-csr") and os.path.isfile(os.path.join(folder_path, f))]
-    if not files:
-        raise Exception("CSR File not found.")
-    latest_file = max(files, key=os.path.getmtime)
-    return os.path.join(folder_path, latest_file)
-    # except Exception as e:
-    #         frappe.throw(" error in get_latest_generated_csr_file: "+ str(e) )
 
 @frappe.whitelist(allow_guest=True)
 def generate_csr():
     try:
-        csr_file_path = os.getcwd()+'/sdkcsrconfig.properties'
-        if not os.path.exists(csr_file_path):
-            raise Exception("Please set the csr config first.")
+        csr_file_path = root_dir+'/sdkcsrconfig.properties'
+        if not os.path.exists(csr_file_path): raise Exception("Please set the csr config first.")
 
         settings=frappe.get_doc('Zatca setting')
         csr_config_file = 'sdkcsrconfig.properties'
         private_key_file = 'sdkprivatekey.pem'
         generated_csr_file = 'sdkcsr.pem'
         SDK_ROOT=settings.sdk_root
-        path_string=f"export SDK_ROOT={SDK_ROOT} && export FATOORA_HOME=$SDK_ROOT/Apps && export SDK_CONFIG=$SDK_ROOT/Configuration/config.json && export PATH=$PATH:$FATOORA_HOME &&  "
+        path_string=f"export SDK_ROOT={SDK_ROOT} && export FATOORA_HOME=$SDK_ROOT/Apps && export SDK_CONFIG={sdk_config} && export PATH=$PATH:$FATOORA_HOME &&  "
         
         if settings.select in ["Simulation", "Sandbox"]:
             command_generate_csr =  path_string  + f'fatoora -sim -csr -csrConfig {csr_config_file} -privateKey {private_key_file} -generatedCsr {generated_csr_file} -pem'
@@ -75,23 +72,27 @@ def generate_csr():
         
         try:
             err,out = _execute_in_shell(command_generate_csr)
-            frappe.msgprint(out)
+
             with open(get_latest_generated_csr_file(), "r") as file_csr:
                 get_csr = file_csr.read()
+
             file = frappe.get_doc({
                     "doctype": "File",
-                    "file_name": f"generated-csr-{settings.name}.csr",
+                    "file_name": f"generated-csr-{nowdate()}.csr",
                     "attached_to_doctype": settings.doctype,
                     "attached_to_name": settings.name,
                     "content": get_csr 
                     })
             file.save(ignore_permissions=True)
-            frappe.msgprint("CSR generation successful. CSR saved")
+            set_content()
+
+            frappe.msgprint(remove_header(out))
+
         except Exception as e:
-            # frappe.throw(err)
-            raise Exception("An error occurred: " + str(e))
+            raise Exception(e)
+
     except Exception as e:
-            frappe.throw("Error occured in generate csr - "+ str(e) )
+            frappe.throw("Error Generating CSR - "+ remove_header(e) )
 
 def get_API_url(base_url):
     
@@ -111,37 +112,38 @@ def get_API_url(base_url):
 @frappe.whitelist(allow_guest=True)
 def create_CSID(): 
     try:
-        # set_cert_path()
         settings=frappe.get_doc('Zatca setting')     
         with open(get_latest_generated_csr_file(), "r") as f:
             csr_contents = f.read()
+
         payload = json.dumps({
         "csr": csr_contents
         })
+
         headers = {
         'accept': 'application/json',
         'OTP': settings.otp,
         'Accept-Version': 'V2',
         'Content-Type': 'application/json'
         }
-        # frappe.throw(csr_contents)
+
         response = requests.request("POST", url=get_API_url(base_url="compliance"), headers=headers, data=payload)
-        # response.status_code = 400
+
         if response.status_code == 400:
             raise Exception("Error: " + "OTP is not valid", response.text)
         if response.status_code != 200:
             raise Exception("Error: " + "Error in Certificate or OTP: " + "<br> <br>" + response.text)
         
-        # frappe.msgprint(str(response.content))
         frappe.msgprint("Successfully created CSID.")
         data=json.loads(response.text)
-        # compliance_cert =get_auth_headers(data["binarySecurityToken"],data["secret"])
+
         concatenated_value = f'{data["binarySecurityToken"]}:{data["secret"]}'
         encoded_value = base64.b64encode(concatenated_value.encode()).decode()
 
-        with open(f"cert.pem", 'w') as file:   #attaching X509 certificate
+        with open(root_dir+"/cert.pem", 'w') as file:   #attaching X509 certificate
             file.write(base64.b64decode(data["binarySecurityToken"]).decode('utf-8'))
 
+        set_content(from_csid=True)
         settings.set("basic_auth", encoded_value)
         settings.save(ignore_permissions=True)
         settings.set("compliance_request_id",data["requestID"])
@@ -152,10 +154,10 @@ def create_CSID():
 def sign_invoice():
     try:
         settings=frappe.get_doc('Zatca setting')
-        xmlfile_name = 'finalzatcaxml.xml'
-        signed_xmlfile_name = 'sdsign.xml'
+        xmlfile_name = os.getcwd()+'/finalzatcaxml.xml'
+        signed_xmlfile_name = os.getcwd()+'/sdsign.xml'
         SDK_ROOT= settings.sdk_root
-        path_string=f"export SDK_ROOT={SDK_ROOT} && export FATOORA_HOME=$SDK_ROOT/Apps && export SDK_CONFIG=$SDK_ROOT/Configuration/config.json && export PATH=$PATH:$FATOORA_HOME &&  "
+        path_string=f"export SDK_ROOT={SDK_ROOT} && export FATOORA_HOME=$SDK_ROOT/Apps && export SDK_CONFIG={sdk_config} && export PATH=$PATH:$FATOORA_HOME &&  "
         
         command_sign_invoice = path_string  + f'fatoora -sign -invoice {xmlfile_name} -signedInvoice {signed_xmlfile_name}'
 
@@ -181,18 +183,18 @@ def sign_invoice():
             raise Exception(err,out)
     except Exception as e:
         err_msg = remove_header(e)
+        frappe.log_error(title='Error Signing Invoice',message=str(e))
         frappe.throw("Error Signing Invoice : <br>" + err_msg)
             
 def generate_qr_code(signed_xmlfile_name,sales_invoice_doc,path_string):
     try:
-        with open(signed_xmlfile_name, 'r') as file:
-            file_content = file.read()
+        # with open(signed_xmlfile_name, 'r') as file:
+        #     file_content = file.read()
         command_generate_qr =path_string  + f'fatoora -qr -invoice {signed_xmlfile_name}'
         err,out = _execute_in_shell(command_generate_qr)
         qr_code_match = re.search(r'QR code = (.+)', out.decode("utf-8"))
         if qr_code_match:
             qr_code_value = qr_code_match.group(1)
-            # frappe.msgprint("QR Code Value: " + qr_code_value) 
             return qr_code_value
         else:
             frappe.msgprint("QR Code not found in the output.")    
@@ -212,7 +214,7 @@ def generate_hash(signed_xmlfile_name,path_string):
         else:
             frappe.msgprint("Hash value not found in the log entry.")
     except Exception as e:
-        frappe.throw(f"Error in generate hash:{e} ")
+        frappe.throw(f"Error generate Invoice Hash:{e} ")
                         
 def validate_invoice(signed_xmlfile_name,path_string):               
     try:
@@ -240,16 +242,6 @@ def get_Clearance_Status(result):
         return clearance_status
     except Exception as e:
         print(e) 
-                        
-def xml_base64_Decode(signed_xmlfile_name):
-    try:
-        with open(signed_xmlfile_name, "r") as file:
-                        xml = file.read().lstrip()
-                        base64_encoded = base64.b64encode(xml.encode("utf-8"))
-                        base64_decoded = base64_encoded.decode("utf-8")
-                        return base64_decoded
-    except Exception as e:
-        frappe.throw("Error in xml base64:  " + str(e) )
 
 def compliance_api_call(uuid1,hash_value, signed_xmlfile_name ):
     try:
@@ -393,13 +385,11 @@ def reporting_API(uuid1,hash_value,signed_xmlfile_name,invoice_number,sales_invo
 
                 frappe.throw("Error: The request you are sending to Zatca is in incorrect format. Please report to system administrator . Status code:  " + str(response.status_code) + "<br><br> " + response.text )            
             
-            
             if response.status_code  in (401,403,407,451 ):
                 invoice_doc = frappe.get_doc('Sales Invoice' , invoice_number  )
                 invoice_doc.db_set('custom_uuid' , 'Not Submitted' , commit=True  , update_modified=True)
                 invoice_doc.db_set('custom_zatca_status' , 'Not Submitted' , commit=True  , update_modified=True)
 
-                
                 frappe.throw("Error: Zatca Authentication failed. Your access token may be expired or not valid. Please contact your system administrator. Status code:  " + str(response.status_code) + "<br><br> " + response.text)            
             
             if response.status_code not in (200, 202):
@@ -407,10 +397,7 @@ def reporting_API(uuid1,hash_value,signed_xmlfile_name,invoice_number,sales_invo
                 invoice_doc.db_set('custom_uuid' , 'Not Submitted' , commit=True  , update_modified=True)
                 invoice_doc.db_set('custom_zatca_status' , 'Not Submitted' , commit=True  , update_modified=True)
                 
-                
                 frappe.throw("Error: Zatca server busy or not responding. Try after sometime or contact your system administrator. Status code:  " + str(response.status_code)+ "<br><br> " + response.text )
-            
-            
             
             if response.status_code  in (200, 202):
                 if response.status_code == 202:
@@ -429,8 +416,6 @@ def reporting_API(uuid1,hash_value,signed_xmlfile_name,invoice_number,sales_invo
                 invoice_doc.db_set('custom_uuid' , uuid1 , commit=True  , update_modified=True)
                 invoice_doc.db_set('custom_zatca_status' , 'REPORTED' , commit=True  , update_modified=True)
 
-                
-                # frappe.msgprint(xml_cleared)
                 success_Log(response.text,uuid1, invoice_number)
                 
             else:
@@ -443,7 +428,6 @@ def reporting_API(uuid1,hash_value,signed_xmlfile_name,invoice_number,sales_invo
 
 def clearance_API(uuid1,hash_value,signed_xmlfile_name,invoice_number,sales_invoice_doc):
     try:
-        # frappe.msgprint("Clearance API")
         settings = frappe.get_doc('Zatca setting')
         if settings.select in ['Simulation', 'Sandbox']:
             authorization = 'Basic' + settings.basic_auth
@@ -524,7 +508,6 @@ def clearance_API(uuid1,hash_value,signed_xmlfile_name,invoice_number,sales_invo
 
 def qrcode_From_Clearedxml(xml_cleared):
     try:
-        # frappe.msgprint("QR code from cleared xml" + str(xml_cleared))
         root = ET.fromstring(xml_cleared)
         qr_element = root.find(".//cac:AdditionalDocumentReference[cbc:ID='QR']/cac:Attachment/cbc:EmbeddedDocumentBinaryObject", namespaces={'cac': 'urn:oasis:names:specification:ubl:schema:xsd:CommonAggregateComponents-2', 'cbc': 'urn:oasis:names:specification:ubl:schema:xsd:CommonBasicComponents-2'})
         qr_code_text = qr_element.text
@@ -584,22 +567,6 @@ def zatca_Call(invoice_doc, compliance_type="0"):
         else:  # if it a compliance test
             compliance_api_call(uuid_str, hash_value, signed_xmlfile_name)
 
-        # create_compliance_x509()
-        # frappe.throw("Created compliance x509 certificate")
-        # if not frappe.db.exists("Sales Invoice", invoice_number):
-        #     frappe.throw(_("Invoice Number is NOT Valid:  " + str(invoice_number)))
-        # invoice= xml_tags()
-        # invoice,uuid1,sales_invoice_doc=salesinvoice_data(invoice,invoice_number)
-        # invoice=doc_Reference(invoice,invoice_doc,invoice_doc.name)
-        # invoice=additional_Reference(invoice)
-        # invoice=company_Data(invoice,invoice_doc)
-        # invoice=customer_Data(invoice,invoice_doc)
-        # invoice=delivery_And_PaymentMeans(invoice,invoice_doc, invoice_doc.is_return) 
-        # invoice=tax_Data(invoice,invoice_doc)
-        # invoice=item_data(invoice,invoice_doc)
-        # validate_invoice(signed_xmlfile_name,path_string)
-        # frappe.msgprint("validated and stopped it here")
-        # result,clearance_status=send_invoice_for_clearance_normal(uuid1,signed_xmlfile_name,hash_value)
     except:       
             frappe.log_error(title='Zatca invoice call failed', message=frappe.get_traceback())
                             
@@ -647,6 +614,77 @@ def zatca_Call_compliance(invoice_number, compliance_type="0"):
 
         compliance_api_call(uuid1, hash_value, signed_xmlfile_name)
 
+    except Exception as e:
+        name = frappe.log_error(title='Zatca invoice call failed', message=frappe.get_traceback())
+        frappe.msgprint(f"Error Occure while Validating, <a href='/app/error-log/{name.name}' style='color: red;'>See Log</a>.", alert=1, indicator='red')
+
+@frappe.whitelist(allow_guest=True)                  
+def zatca_Background(invoice_number):
+    try:
+        settings = frappe.get_doc('Zatca setting')
+        
+        if settings.zatca_invoice_enabled != 1:
+            frappe.throw(_("Zatca Invoice is not enabled in Zatca Settings."))
+                                        
+        sales_invoice_doc= frappe.get_doc("Sales Invoice",invoice_number )
+
+        if sales_invoice_doc.docstatus in [0,2]:
+            frappe.throw(_("Please submit the invoice before sending to Zatca"))
+            
+        if sales_invoice_doc.custom_zatca_status == "REPORTED" or sales_invoice_doc.custom_zatca_status == "CLEARED":
+            frappe.throw(_("Invoice already submitted to Zatca."))
+        
+        zatca_Call(sales_invoice_doc,0)
+        
+    except Exception as e:
+        frappe.throw("Error in background call:  " + str(e) )
+
+@frappe.whitelist(allow_guest=True)          
+def zatca_Background_on_submit(doc, method=None):              
+    settings = frappe.get_doc('Zatca setting')
+    if settings.zatca_invoice_enabled == 1:
+        try:
+            sales_invoice_doc = doc
+            invoice_number = sales_invoice_doc.name
+
+            if not frappe.db.exists("Sales Invoice", invoice_number):
+                    frappe.throw("Please save and submit the invoice before sending to Zatca:  " + str(invoice_number))
+                    
+            sales_invoice_doc= frappe.get_doc("Sales Invoice",invoice_number )
+
+            if sales_invoice_doc.docstatus in [0,2]:
+                frappe.throw("Please submit the invoice before sending to Zatca:  " + str(invoice_number))
+                
+            if sales_invoice_doc.custom_zatca_status == "REPORTED" or sales_invoice_doc.custom_zatca_status == "CLEARED":
+                frappe.throw("Already submitted to Zakat and Tax Authority")
+            
+            zatca_Call(invoice_number,0)
+            
+        except Exception as e:
+            frappe.throw("Error in background call:  " + str(e) )
+
+
+
+
+        # create_compliance_x509()
+        # frappe.throw("Created compliance x509 certificate")
+        # if not frappe.db.exists("Sales Invoice", invoice_number):
+        #     frappe.throw(_("Invoice Number is NOT Valid:  " + str(invoice_number)))
+        # invoice= xml_tags()
+        # invoice,uuid1,sales_invoice_doc=salesinvoice_data(invoice,invoice_number)
+        # invoice=doc_Reference(invoice,invoice_doc,invoice_doc.name)
+        # invoice=additional_Reference(invoice)
+        # invoice=company_Data(invoice,invoice_doc)
+        # invoice=customer_Data(invoice,invoice_doc)
+        # invoice=delivery_And_PaymentMeans(invoice,invoice_doc, invoice_doc.is_return) 
+        # invoice=tax_Data(invoice,invoice_doc)
+        # invoice=item_data(invoice,invoice_doc)
+        # validate_invoice(signed_xmlfile_name,path_string)
+        # frappe.msgprint("validated and stopped it here")
+        # result,clearance_status=send_invoice_for_clearance_normal(uuid1,signed_xmlfile_name,hash_value)
+
+
+
         # invoice,sales_invoice_doc, uuid1 = create_plain_invoice(invoice_number) #xml_tags()
         # invoice,uuid1,sales_invoice_doc=salesinvoice_data(invoice_number)
         # customer_doc= frappe.get_doc("Customer",sales_invoice_doc.customer)
@@ -668,72 +706,6 @@ def zatca_Call_compliance(invoice_number, compliance_type="0"):
         # frappe.msgprint("Compliance test")
     # except ErrorInCompliance as e:
     #         frappe.throw("<b>Error:</b> "+str(e))
-
-    except Exception as e:
-        name = frappe.log_error(title='Zatca invoice call failed', message=frappe.get_traceback())
-        frappe.msgprint(f"Error Occure while Validating, <a href='/app/error-log/{name.name}' style='color: red;'>See Log</a>.", alert=1, indicator='red')
-
-@frappe.whitelist(allow_guest=True)                  
-def zatca_Background(invoice_number):
-    try:
-        # sales_invoice_doc = doc
-        # invoice_number = sales_invoice_doc.name
-        settings = frappe.get_doc('Zatca setting')
-        
-        if settings.zatca_invoice_enabled != 1:
-            frappe.throw(_("Zatca Invoice is not enabled in Zatca Settings."))
-                                        
-        sales_invoice_doc= frappe.get_doc("Sales Invoice",invoice_number )
-
-        if sales_invoice_doc.docstatus in [0,2]:
-            frappe.throw(_("Please submit the invoice before sending to Zatca"))
-            
-        if sales_invoice_doc.custom_zatca_status == "REPORTED" or sales_invoice_doc.custom_zatca_status == "CLEARED":
-            frappe.throw(_("Invoice already submitted to Zatca."))
-        
-        zatca_Call(sales_invoice_doc,0)
-        
-    except Exception as e:
-        frappe.throw("Error in background call:  " + str(e) )
-
-@frappe.whitelist(allow_guest=True)          
-def zatca_Background_on_submit(doc, method=None):              
-# def zatca_Background(invoice_number):
-    settings = frappe.get_doc('Zatca setting')
-    if settings.zatca_invoice_enabled == 1:
-        try:
-            sales_invoice_doc = doc
-            invoice_number = sales_invoice_doc.name
-
-            # if settings.zatca_invoice_enabled != 1:
-            #     frappe.throw("Zatca Invoice is not enabled in Zatca Settings, Please contact your system administrator")
-            
-            if not frappe.db.exists("Sales Invoice", invoice_number):
-                    frappe.throw("Please save and submit the invoice before sending to Zatca:  " + str(invoice_number))
-                    
-            sales_invoice_doc= frappe.get_doc("Sales Invoice",invoice_number )
-
-            if sales_invoice_doc.docstatus in [0,2]:
-                frappe.throw("Please submit the invoice before sending to Zatca:  " + str(invoice_number))
-                
-            if sales_invoice_doc.custom_zatca_status == "REPORTED" or sales_invoice_doc.custom_zatca_status == "CLEARED":
-                frappe.throw("Already submitted to Zakat and Tax Authority")
-            
-            zatca_Call(invoice_number,0)
-            
-        except Exception as e:
-            frappe.throw("Error in background call:  " + str(e) )
-
-def remove_header(text):
-    header = "b'********** Welcome to ZATCA E-Invoice Java SDK 3.3.2 *********************\r\nThis SDK uses Java to call the SDK (jar) passing it an invoice XML file.\r\nIt can take a Standard or Simplified XML, Credit Note, or Debit Note.\r\nIt returns if the validation is successful or shows errors where the XML validation fails.\r\nIt checks for syntax and content as well.\r\nYou can use the command (fatoora -help) for more information.\r\n\r\n*****************************************************************************\n\nn"
-    message = str(text)
-    if message.startswith("b'**********"):
-        message = message[len(header):]
-        if message.endswith("\n'"):
-            return message.removesuffix("\n'")
-        return message
-    return message
-
 
 # import xml.etree.ElementTree as ElementTree
 # from frappe.utils import execute_in_shell

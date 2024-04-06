@@ -1,0 +1,10 @@
+{
+    "xsdPath": "/home/patel/Videos/zatca_sdk3.3/Data/Schemas/xsds/UBL2.1/xsd/maindoc/UBL-Invoice-2.1.xsd",
+    "enSchematron": "/home/patel/Videos/zatca_sdk3.3/Data/Rules/schematrons/CEN-EN16931-UBL.xsl",
+    "zatcaSchematron": "/home/patel/Videos/zatca_sdk3.3/Data/Rules/schematrons/20210819_ZATCA_E-invoice_Validation_Rules.xsl",
+    "certPath": "/home/patel/WebApp/sg-zatca/frappe-bench/sites/sg-zatca.dev/cert.pem",
+    "privateKeyPath": "/home/patel/WebApp/sg-zatca/frappe-bench/sites/sg-zatca.dev/sdkprivatekey.pem",
+    "pihPath": "/home/patel/Videos/zatca_sdk3.3/Data/PIH/pih.txt",
+    "inputPath": "/home/patel/Videos/zatca_sdk3.3/Data/Input",
+    "usagePathFile": "/home/patel/Videos/zatca_sdk3.3/Configuration/usage.txt"
+}

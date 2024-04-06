@@ -2,6 +2,9 @@ import json
 import frappe
 import uuid
 import xml.etree.ElementTree as ET
+import xml.dom.minidom as minidom
+
+root_dir = frappe.get_site_path()
 
 def create_plain_invoice(invoice, inv_type=None, compliance_type=0):
     setting = frappe.get_doc("Zatca setting")
@@ -11,12 +14,14 @@ def create_plain_invoice(invoice, inv_type=None, compliance_type=0):
     cp_country_code = frappe.db.get_value("Country",cp_party_add.country,"code")
     inv_note = "فاتورة مبيعات"
     uuid_str = str(uuid.uuid4())
-    ubl_ext = get_ubl_ext()
-    inv_typecode = 388 # For tax Invoice
-    sub_typecode = 'name="0100000"' if inv_type == "B2B" else 'name="0200000"'
     instruction_note = ""
     invoice_reference= ""
+    payment_meams_code = "ZZZ" # ZZZ is for "Mutually defined" - code list => https://unece.org/fileadmin/DAM/trade/untdid/d16b/tred/tred4461.htm
+    ubl_ext = get_ubl_ext()
+    tax_cat_id, tax_exempt_reasoncode = get_tax_id(invoice)
 
+    inv_typecode = 388 # For tax Invoice
+    sub_typecode = 'name="0100000"' if inv_type == "B2B" else 'name="0200000"'
     if invoice.is_debit_note or compliance_type in ["5","6"]:
         # If Debit note
         inv_typecode = 383
@@ -41,45 +46,7 @@ def create_plain_invoice(invoice, inv_type=None, compliance_type=0):
         </cac:BillingReference>"""
         instruction_note = f"<cbc:InstructionNote>Rate Adjustment/Return</cbc:InstructionNote>"
 
-    # Reason if mandatory for the Different Tax Cat  
-    #1. If Standard rate - Cat code = S:
-    tax_cat_id = "S"
-    tax_exempt_reasoncode = ""
-
-    #2. Exempt from vat - cat code = E:
-        # tax_exempt_reasoncode = "<cbc:TaxExemptionReasonCode>ReasonCodeIfApplicable</cbc:TaxExemptionReasonCode>
-        # TAX_CAT_ID = "E"
-        #And  this will need to add One of the reason code
-        #1. VATEX-SA-29 - Financial services mentioned in Article 29 of the VAT Regulations
-        #2. VATEX-SA-29-7 - Life insurance services mentioned in Article 29 of the VAT VAT
-        #3. VATEX-SA-30 - Real estate transactions mentioned in Article 30 of the VAT Regulations
-
-    #3. Zero Rated - Cat code = Z:
-        # TAX_CAT_ID = "Z"
-        # This will need to add one of the readon code
-        # 1.VATEX-SA-32 - Export of goods
-        # 2.VATEX-SA-33 - Export of services
-        # 3. VATEX-SA-34-1 - The international transport of Goods
-        # 4. VATEX-SA-34-2 - international transport of passengers
-        # 5. VATEX-SA-34-3 - services directly connected and incidental to a Supply of international passenger transport
-        # 6. VATEX-SA-34-4 - Supply of a qualifying means of transport
-        # 7. VATEX-SA-34-5 - Any services relating to Goods or passenger transportation, as defined in article twenty five of these Regulations
-        # 8. VATEX-SA-35 - Medicines and medical equipment 
-        # 9. VATEX-SA-36 - Qualifying metals
-        # 10. VATEX-SA-EDU - Private education to citizen
-        # 11. VATEX-SA-HEA - Private healthcare to citizen
-        # 12. VATEX-SA-MLTRY - supply of qualified military goods
-
-    #4. Services outside scope of tax / Not subject to VAT -CAT code = O:
-        # TAX_CAT_ID = O
-        # 1. VATEX-SA-OOS - Reason is free text, to be provided by the taxpayer on case to case basis.
-
-    # Payment means code should be provided from the list of https://unece.org/fileadmin/DAM/trade/untdid/d16b/tred/tred4461.htm
-    # ZZZ is for "Mutually defined" - desc = "A code assigned within a code list to be used on an interim basis and as defined among trading partners until a precise code can be assigned to the code list."
-    
-    payment_meams_code = "ZZZ"
-
-    with open(frappe.get_app_path("zatca2024")+"/zatca2024/xml_template/plain_invoice.xml","r") as file:
+    with open(frappe.get_module_path("zatca2024")+"/customizations/zatca/xml_template/plain_invoice.xml","r") as file:
         invoice_temp = file.read()
 
     if invoice_temp:
@@ -161,31 +128,10 @@ def create_plain_invoice(invoice, inv_type=None, compliance_type=0):
 
     return invoice_xml, uuid_str
 
-    # print("this===>",invoice_str)
-    # invoice = ET.Element("Invoice", xmlns="urn:oasis:names:specification:ubl:schema:xsd:Invoice-2" )
-    # invoice.set("xmlns:cac", "urn:oasis:names:specification:ubl:schema:xsd:CommonAggregateComponents-2")
-    # invoice.set("xmlns:cbc", "urn:oasis:names:specification:ubl:schema:xsd:CommonBasicComponents-2")
-    # invoice.set("xmlns:ds", "http://www.w3.org/2000/09/xmldsig#")
-    # invoice.set("xmlns:ext", "urn:oasis:names:specification:ubl:schema:xsd:CommonExtensionComponents-2")
-    # invoice.set("xmlns:sac", "urn:oasis:names:specification:ubl:schema:xsd:SignatureAggregateComponents-2")
-    # invoice.set("xmlns:sbc", "urn:oasis:names:specification:ubl:schema:xsd:SignatureBasicComponents-2")
-    # invoice.set("xmlns:sig", "urn:oasis:names:specification:ubl:schema:xsd:CommonSignatureComponents-2")
-    # invoice.set("xmlns:xades", "http://uri.etsi.org/01903/v1.3.2#")
-    # invoice_xml.tag = "invoice urn:oasis:names:specification:ubl:schema:xsd:Invoice-2"
-    # print(f"\n\n\n\n{invoice_xml.tag}\n\n\n")
-    # print(f"\n\n\nXML=>{invoice_xml}\n\n\n")
-    # print(f"\n\n\nInvoice after =>{ET.tostring(invoice_xml, encoding='unicode',method='xml')}\n\n\n")
-    # root = invoice_xml.getroot()
-    # invoice_xml = ET.fromstring(ubl_ext)
-    # invoice_xml = ET.SubElement(invoice,ubl_ext)
-    # invoice_xml = ET.parse(os.getcwd()+"/asif.xml")
-    # root = invoice_xml.getroot()
-    # qr_code_hash = get_qr_code(invoice)
-
 def get_line_item(invoice):
     items = ""
     for item in invoice.items:
-        with open(frappe.get_app_path("zatca2024")+"/zatca2024/xml_template/invoice_line_items.xml","r") as file:
+        with open(frappe.get_module_path("zatca2024")+"/customizations/zatca/xml_template/invoice_line_items.xml","r") as file:
             item_xml = file.read()
         
         if item_xml:
@@ -235,12 +181,51 @@ def get_line_item(invoice):
     
     return items
 
+def get_tax_id(invoice):
+    # Reason if mandatory for the Different Tax Cat  
+    #1. If Standard rate - Cat code = S:
+    # tax_cat_id = "S"
+    # tax_exempt_reasoncode = ""
+
+    #2. Exempt from vat - cat code = E:
+        # tax_exempt_reasoncode = "<cbc:TaxExemptionReasonCode>ReasonCodeIfApplicable</cbc:TaxExemptionReasonCode>
+        # TAX_CAT_ID = "E"
+        #And  this will need to add One of the reason code
+        #1. VATEX-SA-29 - Financial services mentioned in Article 29 of the VAT Regulations
+        #2. VATEX-SA-29-7 - Life insurance services mentioned in Article 29 of the VAT VAT
+        #3. VATEX-SA-30 - Real estate transactions mentioned in Article 30 of the VAT Regulations
+
+    #3. Zero Rated - Cat code = Z:
+        # TAX_CAT_ID = "Z"
+        # This will need to add one of the readon code
+        # 1.VATEX-SA-32 - Export of goods
+        # 2.VATEX-SA-33 - Export of services
+        # 3. VATEX-SA-34-1 - The international transport of Goods
+        # 4. VATEX-SA-34-2 - international transport of passengers
+        # 5. VATEX-SA-34-3 - services directly connected and incidental to a Supply of international passenger transport
+        # 6. VATEX-SA-34-4 - Supply of a qualifying means of transport
+        # 7. VATEX-SA-34-5 - Any services relating to Goods or passenger transportation, as defined in article twenty five of these Regulations
+        # 8. VATEX-SA-35 - Medicines and medical equipment 
+        # 9. VATEX-SA-36 - Qualifying metals
+        # 10. VATEX-SA-EDU - Private education to citizen
+        # 11. VATEX-SA-HEA - Private healthcare to citizen
+        # 12. VATEX-SA-MLTRY - supply of qualified military goods
+
+    #4. Services outside scope of tax / Not subject to VAT -CAT code = O:
+        # TAX_CAT_ID = O
+        # 1. VATEX-SA-OOS - Reason is free text, to be provided by the taxpayer on case to case basis.
+    
+    return "S", ""
+
 def get_ubl_ext():
-    with open(frappe.get_app_path("zatca2024")+"/zatca2024/xml_template/ubl_extension.xml","r") as file:
+    """
+    Adding ubl format only, the values will be auto calculated and filled by sdk
+    """
+    with open(frappe.get_module_path("zatca2024")+"/customizations/zatca/xml_template/ubl_extension.xml","r") as file:
         ubl_ext = file.read()
 
     if ubl_ext:
-        with open ("cert.pem","r") as file:
+        with open (root_dir+"/cert.pem","r") as file:
             cert = file.read()
         if not cert:
             raise Exception("Certificate not found.")
@@ -255,3 +240,41 @@ def get_ubl_ext():
         )
         return ubl
         
+def xml_structuring(invoice,sales_invoice_doc):
+    try:
+        xml_declaration = "<?xml version='1.0' encoding='UTF-8'?>\n"
+        tree = ET.ElementTree(invoice)
+        with open(f"xml_files.xml", 'wb') as file:
+            tree.write(file, encoding='utf-8', xml_declaration=True)
+        with open(f"xml_files.xml", 'r') as file:
+            xml_string = file.read()
+        xml_dom = minidom.parseString(xml_string)
+        pretty_xml_string = xml_dom.toprettyxml(indent="  ")   # created xml into formatted xml form 
+        with open(f"finalzatcaxml.xml", 'w') as file:
+            file.write(pretty_xml_string)
+                    # Attach the getting xml for each invoice
+        try:
+            if frappe.db.exists("File",{ "attached_to_name": sales_invoice_doc.name, "attached_to_doctype": sales_invoice_doc.doctype }):
+                frappe.db.delete("File",{ "attached_to_name":sales_invoice_doc.name, "attached_to_doctype": sales_invoice_doc.doctype })
+        except Exception as e:
+            frappe.throw(frappe.get_traceback())
+        
+        try:
+            fileX = frappe.get_doc(
+                {   "doctype": "File",        
+                    "file_type": "xml",  
+                    "file_name":  "E-invoice-" + sales_invoice_doc.name + ".xml",
+                    "attached_to_doctype":sales_invoice_doc.doctype,
+                    "attached_to_name":sales_invoice_doc.name, 
+                    "content": pretty_xml_string,
+                    "is_private": 1,})
+            fileX.save()
+        except Exception as e:
+            frappe.throw(frappe.get_traceback())
+        
+        try:
+            frappe.db.get_value('File', {'attached_to_name':sales_invoice_doc.name, 'attached_to_doctype': sales_invoice_doc.doctype}, ['file_name'])
+        except Exception as e:
+            frappe.throw(frappe.get_traceback())
+    except Exception as e:
+            frappe.throw("Error occured in XML structuring and attach. Please contact your system administrator"+ str(e) )

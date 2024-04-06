@@ -16,7 +16,12 @@
   "country_name",
   "invoice_type",
   "location_address",
-  "industry_business_category"
+  "industry_business_category",
+  "private_files_section",
+  "csr_config",
+  "csr",
+  "private_key",
+  "certificate"
  ],
  "fields": [
   {
@@ -67,12 +72,41 @@
   {
    "fieldname": "column_break_sv2g7",
    "fieldtype": "Column Break"
+  },
+  {
+   "fieldname": "private_files_section",
+   "fieldtype": "Section Break",
+   "label": "Private files"
+  },
+  {
+   "fieldname": "csr_config",
+   "fieldtype": "Small Text",
+   "label": "CSR Config",
+   "read_only": 1
+  },
+  {
+   "fieldname": "csr",
+   "fieldtype": "Long Text",
+   "label": "CSR",
+   "read_only": 1
+  },
+  {
+   "fieldname": "private_key",
+   "fieldtype": "Long Text",
+   "label": "Private Key",
+   "read_only": 1
+  },
+  {
+   "fieldname": "certificate",
+   "fieldtype": "Long Text",
+   "label": "Certificate",
+   "read_only": 1
   }
  ],
  "index_web_pages_for_search": 1,
  "issingle": 1,
  "links": [],
- "modified": "2024-03-27 10:08:59.541904",
+ "modified": "2024-04-05 16:55:20.366250",
  "modified_by": "Administrator",
  "module": "Zatca2024",
  "name": "CSR Config",
