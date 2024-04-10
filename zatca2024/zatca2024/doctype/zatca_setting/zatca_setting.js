@@ -18,7 +18,7 @@ frappe.ui.form.on("Zatca setting", {
     },
     production_csid: function (frm) {
         if(frm.doc.__unsaved){
-            frappe.throw(_("Please Save the document first."))
+            frappe.throw(__("Please Save the document first."))
         }else{
             frappe.call({
                 method: "zatca2024.zatca2024.customizations.zatca.zatca_api_call.production_CSID",
@@ -36,7 +36,7 @@ frappe.ui.form.on("Zatca setting", {
     },
     csid_attach: function (frm) {
         if(frm.doc.__unsaved){
-            frappe.throw(_("Please Save the document first."))
+            frappe.throw(__("Please Save the document first."))
         }else{
                 frappe.call({
                     method: "zatca2024.zatca2024.customizations.zatca.zatca_api_call.create_CSID",
@@ -54,7 +54,7 @@ frappe.ui.form.on("Zatca setting", {
         },
     create_csr: function (frm) {
         if(frm.doc.__unsaved){
-            frappe.throw(_("Please Save the document first."))
+            frappe.throw(__("Please Save the document first."))
         }else{
             frappe.call({
                 method: "zatca2024.zatca2024.customizations.zatca.zatcasdkcode.generate_csr",
@@ -72,7 +72,7 @@ frappe.ui.form.on("Zatca setting", {
     },
     check_compliance: function (frm) {
         if(frm.doc.__unsaved){
-            frappe.throw(_("Please Save the document first."))
+            frappe.throw(__("Please Save the document first."))
         }else{
                 frappe.call({
                 method: "zatca2024.zatca2024.customizations.zatca.zatcasdkcode.zatca_Call_compliance",
