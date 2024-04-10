@@ -1,3 +1,4 @@
+import re
 import json
 import frappe
 import uuid
@@ -52,9 +53,9 @@ def create_plain_invoice(invoice, inv_type=None, compliance_type=0):
     if invoice_temp:
         line_items = get_line_item(invoice)
         invoice_str = invoice_temp.format(
+            # UBLExtensions
             UBL_EXTN = ubl_ext,
-            QR_CODE = "",
-            BILLING_REFERANCE= invoice_reference,
+            # GaneralInfo
             INVOICE_NAME = invoice.name,
             UUID = uuid_str,
             POSTING_DATE = str(invoice.posting_date),
@@ -63,8 +64,13 @@ def create_plain_invoice(invoice, inv_type=None, compliance_type=0):
             SUB_TYPECODE= sub_typecode,
             INV_NOTE = inv_note,
             INV_CURRENCY = invoice.currency,
+            # BillingReference
+            BILLING_REFERANCE= invoice_reference,
+            # AdditionalDocumentReference
             PIH = setting.pih,
-            ICV_UUID='00006',
+            ICV_UUID=re.sub(r'\D', '', invoice.name),
+            QR_CODE = "",
+            # AccountingSupplierParty
             SP_PARTY_ID = invoice.company_tax_id, #Need to check
             SP_STREET_NAME = sp_party_add.address_line2,
             SP_ADD_STREET_NAME = sp_party_add.additional_street_name,
@@ -77,6 +83,7 @@ def create_plain_invoice(invoice, inv_type=None, compliance_type=0):
             SP_COUNTRY_ABBR = sp_country_code.upper(),
             COMPANY_VAT_NO = invoice.company_tax_id,
             COMPANY_NAME = invoice.company,
+            # AccountingCustomerParty
             CP_STREET_NAME = cp_party_add.address_line2,
             CP_ADD_STREET_NAME = cp_party_add.additional_street_name,
             CP_BUILDING_NO = cp_party_add.address_line1,
@@ -88,16 +95,20 @@ def create_plain_invoice(invoice, inv_type=None, compliance_type=0):
             CP_COUNTRY_ABBR = cp_country_code.upper(),
             CUS_VAT_NO = "",#invoice.tax_id,
             CUSTOMER_NAME = invoice.customer,
-            ACT_DELIVERY_DATE = str(invoice.posting_date),# Delivery date was on SO need to check the flow,
-            LST_DELIVERY_DATE = str(invoice.posting_date), # Need to check
-            PYM_MEANS_CODE = payment_meams_code, # Need to check,
+            # Delivery
+            ACT_DELIVERY_DATE = str(invoice.posting_date),
+            LST_DELIVERY_DATE = str(invoice.posting_date),
+            # PaymentMeans
+            PYM_MEANS_CODE = payment_meams_code,
             INSTRUCTION_NOTE = instruction_note,
+            # TaxTotal
             TAX_AMOUNT = invoice.total_taxes_and_charges,
             TAXABLE_AMOUNT = invoice.total,
             TAX_CAT_ID = tax_cat_id, #Need to implement dynamic value for this
             TAX_EXEMPT_RESAON = tax_exempt_reasoncode,
-            TAX_PERC = "5", #Need to check for mutiple tax rate in a invoice
+            TAX_PERC = "5", # Need to check for mutiple tax rate in a invoice
             TAX_SCHEME = "VAT",
+            # LegalMonetaryTotal
             LN_EXT_AMOUNT = invoice.total,
             TAX_EXC_AMOUNT = invoice.total,
             TAX_INC_AMOUNT = invoice.grand_total, # BT-112
@@ -106,6 +117,7 @@ def create_plain_invoice(invoice, inv_type=None, compliance_type=0):
             PRE_PAID_AMOUNT = invoice.total_advance, # BT-113
             PAYABLE_ROUNDING_AMOUNT = invoice.rounding_adjustment, # BT-114
             PAYABLE_AMOUNT = invoice.outstanding_amount, # BT-115 , Formula BT-115 = BT-112 - BT-113 + BT-114
+            # InvoiceLine
             LINE_ITEMS = line_items
         )
         
@@ -135,11 +147,11 @@ def get_line_item(invoice):
             item_xml = file.read()
         
         if item_xml:
-            #If extra charges are there need to make CHARGES == True and following cbc tag
+            # If extra charges are there need to make CHARGES == True and following cbc tag
             # charge_resaoncode = <cbc:AllowanceChargeReasonCode>{reason_code}</cbc:AllowanceChargeReasonCode>
 			# charge_reason_text = <cbc:AllowanceChargeReason>{reason_text}</cbc:AllowanceChargeReason>
             # Reason text and code will be found at https://unece.org/fileadmin/DAM/trade/untdid/d16b/tred/tred7161.htm
-            charges = "true"
+            charges = "false"
             charge_resaoncode = ""
             charge_reason_text = "<cbc:AllowanceChargeReason>discount</cbc:AllowanceChargeReason>"
             charge_amount = 0
@@ -158,17 +170,23 @@ def get_line_item(invoice):
                 frappe.throw("Item tax details not found in the invoice.")
 
             items = items+item_xml.format(
+                # GaneralInfo
                 ITEM_IDX = item.idx,
                 ITEM_QTY = item.qty,
+                ITEM_EXT_AMOUNT = item.amount, # BT-131
+                # TaxTotal
+                TAX_AMOUNT = tax_details[1],
+                ROUNDING_AMOUNT = rounding_amount,
+                # Item
                 ITEM_NAME = item.item_name,
+                # Item-ClassifiedTaxCategory
                 TAX_CAT = "S", # Need to check
                 TAX_PERC = tax_details[0],
                 TAX_SCHEME = "VAT",
-                TAX_AMOUNT = tax_details[1],
-                ITEM_EXT_AMOUNT = item.amount, # BT-131
-                BASE_QTY = item.qty,
-                ROUNDING_AMOUNT = rounding_amount,
+                # Price
                 PRICE_AMOUNT = item.rate, # BT-146
+                BASE_QTY = item.qty,
+                # AllowanceCharge
                 CHARGE = charges,
                 CHARGE_ALL_RESAONCODE = charge_resaoncode,
                 CHARGE_ALL_RESAON = charge_reason_text,
@@ -241,40 +259,42 @@ def get_ubl_ext():
         return ubl
         
 def xml_structuring(invoice,sales_invoice_doc):
-    try:
-        xml_declaration = "<?xml version='1.0' encoding='UTF-8'?>\n"
+    # try:
+        # xml_declaration = "<?xml version='1.0' encoding='UTF-8'?>\n"
         tree = ET.ElementTree(invoice)
-        with open(f"xml_files.xml", 'wb') as file:
+        with open(f"invoice.xml", 'wb') as file:
             tree.write(file, encoding='utf-8', xml_declaration=True)
-        with open(f"xml_files.xml", 'r') as file:
-            xml_string = file.read()
-        xml_dom = minidom.parseString(xml_string)
-        pretty_xml_string = xml_dom.toprettyxml(indent="  ")   # created xml into formatted xml form 
-        with open(f"finalzatcaxml.xml", 'w') as file:
-            file.write(pretty_xml_string)
-                    # Attach the getting xml for each invoice
-        try:
+
+        if frappe.db.get_single_value("Zatca setting","attach_xml_with_invoice"):
+            with open(f"invoice.xml", 'r') as file:
+                xml_string = file.read()
+            # xml_dom = minidom.parseString(xml_string)
+            # pretty_xml_string = xml_dom.toprettyxml(indent=1)   # created xml into formatted xml form 
+            # with open(f"finalzatcaxml.xml", 'w') as file:
+            #     file.write(pretty_xml_string)
+                        # Attach the getting xml for each invoice
+            # try:
             if frappe.db.exists("File",{ "attached_to_name": sales_invoice_doc.name, "attached_to_doctype": sales_invoice_doc.doctype }):
                 frappe.db.delete("File",{ "attached_to_name":sales_invoice_doc.name, "attached_to_doctype": sales_invoice_doc.doctype })
-        except Exception as e:
-            frappe.throw(frappe.get_traceback())
-        
-        try:
+            # except Exception as e:
+                # frappe.throw(frappe.get_traceback())
+            
+            # try:
             fileX = frappe.get_doc(
-                {   "doctype": "File",        
-                    "file_type": "xml",  
+                {   "doctype": "File",
+                    "file_type": "xml",
                     "file_name":  "E-invoice-" + sales_invoice_doc.name + ".xml",
                     "attached_to_doctype":sales_invoice_doc.doctype,
-                    "attached_to_name":sales_invoice_doc.name, 
-                    "content": pretty_xml_string,
+                    "attached_to_name":sales_invoice_doc.name,
+                    "content": xml_string,
                     "is_private": 1,})
             fileX.save()
-        except Exception as e:
-            frappe.throw(frappe.get_traceback())
         
-        try:
-            frappe.db.get_value('File', {'attached_to_name':sales_invoice_doc.name, 'attached_to_doctype': sales_invoice_doc.doctype}, ['file_name'])
-        except Exception as e:
-            frappe.throw(frappe.get_traceback())
-    except Exception as e:
-            frappe.throw("Error occured in XML structuring and attach. Please contact your system administrator"+ str(e) )
+        # try:
+        #     frappe.db.get_value('File', {'attached_to_name':sales_invoice_doc.name, 'attached_to_doctype': sales_invoice_doc.doctype}, ['file_name'])
+        # except Exception as e:
+        #     frappe.throw(frappe.get_traceback())
+    # except Exception as e:
+    #         frappe.throw("Error occured in XML structuring and attach. Please contact your system administrator"+ str(e) )
+
+

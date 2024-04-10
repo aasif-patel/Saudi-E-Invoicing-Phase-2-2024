@@ -17,24 +17,13 @@ frappe.ui.form.on("Zatca setting", {
        
     },
     production_csid: function (frm) {
-        frappe.call({
-            method: "zatca2024.zatca2024.customizations.zatca.zatcasdkcode.production_CSID",
-            args: {
-              
-            },
-            callback: function (r) {
-                if (!r.exc) {
-                    frm.save();
-                    window.open(r.message.url);
-                }
-            },
-        });
-    },
-    csid_attach: function (frm) {
+        if(frm.doc.__unsaved){
+            frappe.throw("Please Save the document first.")
+        }else{
             frappe.call({
-                method: "zatca2024.zatca2024.customizations.zatca.zatcasdkcode.create_CSID",
+                method: "zatca2024.zatca2024.customizations.zatca.zatca_api_call.production_CSID",
                 args: {
-                  
+                
                 },
                 callback: function (r) {
                     if (!r.exc) {
@@ -43,35 +32,63 @@ frappe.ui.form.on("Zatca setting", {
                     }
                 },
             });
+        }
+    },
+    csid_attach: function (frm) {
+        if(frm.doc.__unsaved){
+            frappe.throw("Please Save the document first.")
+        }else{
+                frappe.call({
+                    method: "zatca2024.zatca2024.customizations.zatca.zatca_api_call.create_CSID",
+                    args: {
+                    
+                    },
+                    callback: function (r) {
+                        if (!r.exc) {
+                            frm.save();
+                            window.open(r.message.url);
+                        }
+                    },
+                });
+            }
         },
     create_csr: function (frm) {
-        frappe.call({
-            method: "zatca2024.zatca2024.customizations.zatca.zatcasdkcode.generate_csr",
-            args: {
-              
-            },
-            callback: function (r) {
-                if (!r.exc) {
-                    frm.save();
-                    window.open(r.message.url);
-                }
-            },
-        });
+        if(frm.doc.__unsaved){
+            frappe.throw("Please Save the document first.")
+        }else{
+            frappe.call({
+                method: "zatca2024.zatca2024.customizations.zatca.zatcasdkcode.generate_csr",
+                args: {
+                
+                },
+                callback: function (r) {
+                    if (!r.exc) {
+                        frm.save();
+                        window.open(r.message.url);
+                    }
+                },
+            });
+        }
     },
     check_compliance: function (frm) {
-         
-            frappe.call({
-            method: "zatca2024.zatca2024.customizations.zatca.zatcasdkcode.zatca_Call_compliance",
-            args: {
-                "invoice_number": frm.doc.sample_invoice_to_test,
-            },
-            callback: function (r) {
-                if (!r.exc) {
-                    // frm.save();                  
-                }
-            },
-            
-        });
+        if(frm.doc.__unsaved){
+            frappe.throw("Please Save the document first.")
+        }else{
+                frappe.call({
+                method: "zatca2024.zatca2024.customizations.zatca.zatcasdkcode.zatca_Call_compliance",
+                args: {
+                    "invoice_number": frm.doc.sample_invoice_to_test,
+                },
+                callback: function (r) {
+                    if (!r.exc) {
+                        // frm.save();                  
+                    }
+                },
+            });
+        }
+    },
+    validation_type:function(frm){
+        frm.save()
     }
     
 });

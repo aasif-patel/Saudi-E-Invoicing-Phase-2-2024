@@ -16,7 +16,8 @@ def after_insert(doc, method=None):
         doc.save()
 
 def on_submit(doc, method=None):
-    zatca_Background_on_submit(doc)
+    if frappe.db.get_single_value("Zatca setting","send_invoice_to_zatca") == "On Submit":
+        zatca_Background_on_submit(invoice_doc=doc)
 
 def before_cancel(doc, method=None):
     if doc.custom_zatca_status in ("REPORTED", "CLEARED"):

@@ -5,7 +5,7 @@ import frappe
 import json
 import os
 from frappe.model.document import Document
-from zatca2024.zatca2024.customizations.zatca.file_manager import update_sdk_config
+from zatca2024.zatca2024.customizations.zatca.file_manager import update_sdk_config, set_pih
 
 class Zatcasetting(Document):
 	def validate(self):
@@ -16,6 +16,10 @@ class Zatcasetting(Document):
 		self.sdk_root = self.sdk_root.removesuffix('/')
 		old_doc = self.get_doc_before_save()
 
-		if old_doc and old_doc.sdk_root != self.sdk_root and self.sdk_root:
-			update_sdk_config(self.sdk_root)
+		if old_doc: 
+			if old_doc.sdk_root != self.sdk_root and self.sdk_root:
+				update_sdk_config(self.sdk_root)
+
+			if old_doc.pih != self.pih:
+				set_pih(self.pih)
 

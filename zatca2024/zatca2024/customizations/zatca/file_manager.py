@@ -2,6 +2,7 @@ import frappe
 import os
 import base64
 import json
+import pyqrcode
 
 root_dir = os.getcwd() + frappe.get_site_path().removeprefix('.')
 
@@ -27,6 +28,7 @@ def set_content(from_csid=False):
         if pk_content:
             frappe.db.set_single_value("CSR Config","private_key",pk_content)
 
+
 def get_latest_generated_csr_file(folder_path=frappe.get_site_path()):
     files = [folder_path+'/'+f for f in os.listdir(folder_path) if f.startswith("generated-csr") and os.path.isfile(os.path.join(folder_path, f))]
     if not files:
@@ -34,6 +36,7 @@ def get_latest_generated_csr_file(folder_path=frappe.get_site_path()):
     latest_file = max(files, key=os.path.getmtime)
 
     return latest_file
+
 
 def remove_header(text):
     header = "b'********** Welcome to ZATCA E-Invoice Java SDK 3.3.2 *********************\r\nThis SDK uses Java to call the SDK (jar) passing it an invoice XML file.\r\nIt can take a Standard or Simplified XML, Credit Note, or Debit Note.\r\nIt returns if the validation is successful or shows errors where the XML validation fails.\r\nIt checks for syntax and content as well.\r\nYou can use the command (fatoora -help) for more information.\r\n\r\n*****************************************************************************\n\nn"
@@ -45,6 +48,7 @@ def remove_header(text):
         return msg_without_hdr
     return plan_msg
 
+
 def xml_base64_Decode(signed_xmlfile_name):
     try:
         with open(signed_xmlfile_name, "r") as file:
@@ -55,16 +59,18 @@ def xml_base64_Decode(signed_xmlfile_name):
     except Exception as e:
         raise Exception(e)
 
+
 @frappe.whitelist()
 def update_sdk_config(sdk_root):
     """
-    Updating SDK config, removing default presit location with our ganerated cert and privatkey
+    Updating SDK config, removing default preset location with our ganerated cert and privatkey files
     """
     try:
         path_to_change = {
             "certPath": root_dir+"/cert.pem",
             "privateKeyPath": root_dir+"/sdkprivatekey.pem",
-            # "pihPath": root+"/Data/PIH/pih.txt"
+            "pihPath": root_dir+"/pih.txt",
+            "usagePathFile":root_dir+"/usage.txt"
         }
         try:
             with open(sdk_root+"/Configuration/config.json", "r") as file:
@@ -94,10 +100,75 @@ def update_sdk_config(sdk_root):
         frappe.msgprint(f"Error updating SDK Config, <a href='/app/error-log/{log.name}' style='color: red;'>See Log</a>.", alert=1, indicator='red')
         
 
+def set_pih(pih):
+    if not pih:
+        pih = ""
+
+    with open(root_dir+"/pih.txt", "w") as file:
+        file.write(pih)
+
+
+def attach_QR_Image_For_Reporting(qr_code_value,sales_invoice_doc):
+    if frappe.db.get_single_value("Zatca setting","attach_qr_code"):
+        qr = pyqrcode.create(qr_code_value)
+        temp_file_path = "qr_code_value.png"
+        qr.png(temp_file_path, scale=5)
+        file = frappe.get_doc({
+            "doctype": "File",
+            "file_name": f"QR_image_{sales_invoice_doc.name}.png",
+            "attached_to_doctype": sales_invoice_doc.doctype,
+            "attached_to_name": sales_invoice_doc.name,
+            "content": open(temp_file_path, "rb").read()
+        })
+        file.save(ignore_permissions=True) 
+
+
+def qrcode_From_Clearedxml(xml_cleared):
+    try:
+        root = ET.fromstring(xml_cleared)
+        qr_element = root.find(".//cac:AdditionalDocumentReference[cbc:ID='QR']/cac:Attachment/cbc:EmbeddedDocumentBinaryObject", namespaces={'cac': 'urn:oasis:names:specification:ubl:schema:xsd:CommonAggregateComponents-2', 'cbc': 'urn:oasis:names:specification:ubl:schema:xsd:CommonBasicComponents-2'})
+        qr_code_text = qr_element.text
+        return qr_code_text
+
+    except Exception as e:
+        raise Exception("Could Not find QR Code in Cleared XML:  " + str(e) )
+
+
+def attach_QR_Image_For_Clearance(xml_cleared,sales_invoice_doc):
+    qr_code_text=qrcode_From_Clearedxml(xml_cleared)
+    qr = pyqrcode.create(qr_code_text)
+    temp_file_path = "qr_code.png"
+    qr_image=qr.png(temp_file_path, scale=5)
+    file = frappe.get_doc({
+        "doctype": "File",
+        "file_name": f"QR_image_{sales_invoice_doc.name}.png",
+        "attached_to_doctype": sales_invoice_doc.doctype,
+        "attached_to_name": sales_invoice_doc.name,
+        "content": open(temp_file_path, "rb").read()
+
+    })
+    file.save(ignore_permissions=True)
+
+
+def attach_sign_xml(sign_xml_name, invoice_doc):
+    with open(sign_xml_name, "r") as file:
+        content = file.read()
+
+    fileX = frappe.get_doc(
+        {   "doctype": "File",
+            "file_type": "xml",
+            "file_name":  "E-Sign-invoice-" + invoice_doc.name + ".xml",
+            "attached_to_doctype":invoice_doc.doctype,
+            "attached_to_name":invoice_doc.name,
+            "content": content,
+            "is_private": 1,})
+    fileX.save()
+
+
 def update_files():
     """
     Check and upate the files, as server update might delete the created file
-    [NOTE]:No need now, file stored in /sites/<site_name> are removed by server update
+    [NOTE]:No need now, file stored in /sites/<site_name> are not affecting by server update
     """
     csr_doc = frappe.get_doc("CSR Config")
     # Checking csr config

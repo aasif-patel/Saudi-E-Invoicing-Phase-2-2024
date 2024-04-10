@@ -15,8 +15,8 @@
   "zatca_invoice_enabled",
   "background",
   "attach_xml_with_invoice",
-  "attach_xml_with_qr_code",
-  "attach_qr_code_doctype",
+  "attach_sign_xml",
+  "attach_qr_code",
   "attach_e_invoice_send_status_with_invoice",
   "urls__api_endpoints_section",
   "select",
@@ -54,7 +54,7 @@
    "fieldname": "send_invoice_to_zatca",
    "fieldtype": "Select",
    "label": "Send Invoice to ZATCA",
-   "options": "Live\nBatches"
+   "options": "On Submit\nManual"
   },
   {
    "fieldname": "create_csr",
@@ -63,26 +63,16 @@
   },
   {
    "default": "0",
+   "description": "Invoice Converted into XML.",
    "fieldname": "attach_xml_with_invoice",
    "fieldtype": "Check",
-   "label": "Attach xml with Invoice"
-  },
-  {
-   "default": "0",
-   "fieldname": "attach_xml_with_qr_code",
-   "fieldtype": "Check",
-   "label": "Attach xml with QR code"
-  },
-  {
-   "default": "0",
-   "fieldname": "attach_qr_code_doctype",
-   "fieldtype": "Check",
-   "label": "Attach QR code doctype"
+   "label": "Attach XML with Invoice"
   },
   {
    "default": "0",
    "fieldname": "attach_e_invoice_send_status_with_invoice",
    "fieldtype": "Check",
+   "hidden": 1,
    "label": "Attach E-Invoice send status with Invoice"
   },
   {
@@ -167,6 +157,7 @@
    "default": "0",
    "fieldname": "background",
    "fieldtype": "Check",
+   "hidden": 1,
    "label": "Send e-invoice Background"
   },
   {
@@ -212,12 +203,26 @@
   {
    "fieldname": "column_break_jybs3",
    "fieldtype": "Column Break"
+  },
+  {
+   "default": "0",
+   "description": "Validated xml invoice with signature and QR Code value.",
+   "fieldname": "attach_sign_xml",
+   "fieldtype": "Check",
+   "label": "Attach Sign XML with invoice"
+  },
+  {
+   "default": "0",
+   "description": "QR Code png file.",
+   "fieldname": "attach_qr_code",
+   "fieldtype": "Check",
+   "label": "Attach QR code with invoice"
   }
  ],
  "index_web_pages_for_search": 1,
  "issingle": 1,
  "links": [],
- "modified": "2024-04-06 15:24:28.094791",
+ "modified": "2024-04-10 09:18:14.064697",
  "modified_by": "Administrator",
  "module": "Zatca2024",
  "name": "Zatca setting",
