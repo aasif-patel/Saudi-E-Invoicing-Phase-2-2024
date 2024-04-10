@@ -1,4 +1,5 @@
 import frappe
+from frappe import _
 import json
 import requests
 import base64
@@ -114,7 +115,7 @@ def create_CSID():
         
     except Exception as e:
         #Error Log
-        frappe.throw("Error in csid formation : " + str(e))
+        frappe.throw(_("Error in csid formation :{0}").format(str(e)))
 
 @frappe.whitelist(allow_guest=True)                   
 def production_CSID():    
@@ -157,7 +158,7 @@ def production_CSID():
 
     except Exception as e:
         #Error Log
-        frappe.throw("Error in Prodction CSID formation :  " + str(e) )
+        frappe.throw(_("Error in Prodction CSID formation : {0}").format(str(e)))
 
 
 def reporting_API(uuid1, hash_value, signed_xmlfile_name, sales_invoice_doc, qr_code_value):

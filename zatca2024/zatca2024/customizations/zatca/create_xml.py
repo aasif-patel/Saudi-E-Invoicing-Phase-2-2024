@@ -1,6 +1,7 @@
 import re
 import json
 import frappe
+from frappe import _
 import uuid
 import xml.etree.ElementTree as ET
 import xml.dom.minidom as minidom
@@ -167,7 +168,7 @@ def get_line_item(invoice):
             rounding_amount = item.amount+tax_details[1] # BR-KSA-51
 
             if not tax_details:
-                frappe.throw("Item tax details not found in the invoice.")
+                frappe.throw(_("Item tax details not found in the invoice."))
 
             items = items+item_xml.format(
                 # GaneralInfo

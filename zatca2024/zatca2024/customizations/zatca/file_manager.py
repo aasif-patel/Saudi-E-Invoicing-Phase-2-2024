@@ -1,4 +1,5 @@
 import frappe
+from frappe import _
 import os
 import base64
 import json
@@ -76,7 +77,7 @@ def update_sdk_config(sdk_root):
             with open(sdk_root+"/Configuration/config.json", "r") as file:
                 sdk_config = json.load(file)
         except:
-            frappe.throw("Can't able to read SDK config.")
+            frappe.throw(_("Can't able to read SDK config."))
 
         if sdk_config:
             custom_sdk_config = {}
@@ -91,9 +92,9 @@ def update_sdk_config(sdk_root):
                     with open(frappe.get_module_path("zatca2024")+"/customizations/zatca/sdk_config.json", "w") as file:
                         json.dump(custom_sdk_config, file, indent=4)
                 except:
-                    frappe.throw("Can't able to update SDK Config.")
+                    frappe.throw(_("Can't able to update SDK Config."))
 
-            frappe.msgprint("SDK Config Updated.", alert=1, indicator='green')
+            frappe.msgprint(_("SDK Config Updated."), alert=1, indicator='green')
 
     except Exception as e:
         log = frappe.log_error(title='Error updating SDK Config',message=str(e))

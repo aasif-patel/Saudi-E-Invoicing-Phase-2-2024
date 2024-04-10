@@ -2,6 +2,7 @@
 # For license information, please see license.txt
 
 import frappe
+from frappe import _
 import json
 import os
 from frappe.model.document import Document
@@ -10,7 +11,7 @@ from zatca2024.zatca2024.customizations.zatca.file_manager import update_sdk_con
 class Zatcasetting(Document):
 	def validate(self):
 		if self.sdk_root and not os.path.exists(self.sdk_root+"/Apps"):
-			frappe.throw("SDK Root is not valid.")
+			frappe.throw(_("SDK Root is not valid."))
 
 	def before_save(self):
 		self.sdk_root = self.sdk_root.removesuffix('/')

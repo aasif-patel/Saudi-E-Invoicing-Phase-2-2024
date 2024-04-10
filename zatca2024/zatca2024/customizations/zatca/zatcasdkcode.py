@@ -149,20 +149,20 @@ def validate_invoice(signed_xmlfile_name,path_string):
         if global_validation_result == 'FAILED':
             frappe.msgprint(out)
             frappe.msgprint(err)
-            frappe.msgprint("Validation has been failed")
+            frappe.msgprint(_("Validation has been failed"))
         else:
             frappe.msgprint(out)
             frappe.msgprint(err)
-            frappe.msgprint("Validation has been done Successfully")
+            frappe.msgprint(_("Validation has been done Successfully"))
     except Exception as e:
-            frappe.throw(f"Error Validating Invoice: {str(e)}")  
+            frappe.throw(_("Error Validating Invoice: {0}").format(str(e)))  
 
 
 def error_Log():
     try:
         frappe.log_error(title='Zatca invoice call failed in clearance status',message=frappe.get_traceback())
     except Exception as e:
-        frappe.throw("Error in error log  " + str(e))   
+        frappe.throw(_("Error in error log")+" "+ str(e))
 
 
 @frappe.whitelist(allow_guest=True) 
@@ -238,7 +238,7 @@ def zatca_Call_compliance(invoice_number, compliance_type="0"):
             inv_type = "B2B"
                     
         if not frappe.db.exists("Sales Invoice", invoice_number):
-            frappe.throw("Invoice Number is NOT Valid:  " + str(invoice_number))
+            frappe.throw(_("Invoice Number is NOT Valid : {0}").format(str(invoice_number)))
         
         sales_invoice_doc = frappe.get_doc("Sales Invoice",invoice_number)
         invoice, uuid1 = create_plain_invoice(sales_invoice_doc,inv_type,compliance_type)
@@ -249,14 +249,14 @@ def zatca_Call_compliance(invoice_number, compliance_type="0"):
 
     except Exception as e:
         log = log_error(title="Error Ganerating or Signing XML", alert=False)
-        frappe.throw(f"Error Ganerating or Signing XML, See <a href='/app/error-log/{log}' style='color:red'>Error Log</a>")
-    
+        frappe.throw(_("Error Ganerating or Signing XML, See <a href='/app/error-log/{0}' style='color:red'>Error Log</a>").format(log))
+
     try:
         compliance_api_call(uuid1, hash_value, signed_xmlfile_name)
 
     except Exception as e:
         log = log_error(title="Error In Compliance API Call", alert=False)
-        frappe.throw(f"Error In Compliance API CallL, See <a href='/app/error-log/{log}' style='color:red'>Error Log</a>")
+        frappe.throw(_("Error In Compliance API CallL, See <a href='/app/error-log/{0}' style='color:red'>Error Log</a>").format(log))
     
 
 @frappe.whitelist()          
@@ -268,19 +268,19 @@ def zatca_Background_on_submit(invoice_number=None,invoice_doc=None):
         if invoice_number:
             sales_invoice_doc= frappe.get_doc("Sales Invoice",invoice_number )
             if sales_invoice_doc.docstatus == 0:
-                frappe.throw("Please submit the invoice before sending to Zatca:  " + str(sales_invoice_doc.name))
+                frappe.throw(_("Please submit the invoice before sending to Zatca : {0}").format(sales_invoice_doc.name))
             if sales_invoice_doc.docstatus == 2:
-                frappe.throw("Can not send Cancelled invoice to Zatca:  " + str(sales_invoice_doc.name))
+                frappe.throw(_("Can not send Cancelled invoice to Zatca : {0}").format(sales_invoice_doc.name))
 
         if not frappe.db.exists("Sales Invoice", sales_invoice_doc.name):
-            frappe.throw(f"Invoice:{str(sales_invoice_doc.name)} does not exist.")
+            frappe.throw(_("Invoice:{0} does not exist.").format(sales_invoice_doc.name))
             
         if sales_invoice_doc.custom_zatca_status == "REPORTED" or sales_invoice_doc.custom_zatca_status == "CLEARED":
-            frappe.throw("Already submitted to ZATCA.")
+            frappe.throw(_("Already submitted to ZATCA."))
         
         zatca_Call(sales_invoice_doc,"0")
     else:
-        frappe.smgprint("Zatca is not enabled.")
+        frappe.smgprint(_("Zatca is not enabled."))
 
 
 def log_error(title="Error",alert=True):

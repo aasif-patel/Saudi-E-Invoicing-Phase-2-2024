@@ -1,4 +1,5 @@
 import frappe
+from frappe import _
 import os
 # frappe.init(site="prod.erpgulf.com")
 # frappe.connect()
@@ -22,26 +23,26 @@ def create_compliance_x509(securtity_token):
                     with open(f"cert.pem", 'w') as file:   #attaching X509 certificate
                         file.write(base64.b64decode(binarySecurityToken).decode('utf-8'))
                 except Exception as e:
-                    frappe.throw( "error in compliance x509" + str(e) )
+                    frappe.throw(_( "error in compliance x509" + str(e) ))
 
 @frappe.whitelist()
 def check_compliance():
             try:
-                frappe.msgprint("Check compliance")
+                frappe.msgprint(_("Check compliance"))
                 settings=frappe.get_doc('Zatca setting')
                 settings.validation_results = settings.validation_results + "Compliance validation settings are here"
                 settings.save()
                 settings.notify_update()
-                # frappe.msgprint("Check compliance")
+                # frappe.msgprint(_("Check compliance"))
             except Exception as e:
-                    frappe.throw("error occured in check compliance"+ str(e) )
+                    frappe.throw(_("error occured in check compliance"+ str(e) ))
                     
 def get_pwd():
     try:
         err,out = execute_in_shell("pwd")
         return out
     except Exception as e:
-        frappe.throw("error occured in get pwd"+ str(e) )
+        frappe.throw(_("error occured in get pwd"+ str(e) ))
         
 def set_cert_path():
     try:
@@ -61,11 +62,11 @@ def set_cert_path():
         #     f"-e 's|(\"privateKeyPath\": \").*\"|\\1{new_private_key_path}\"|' "
         #     f"{json_file_path}"
         # )    
-        frappe.throw(sed_command)
+        frappe.throw(_(sed_command))
         # err,out = execute_in_shell(sed_command)
         
-        frappe.msgprint("Cert and Private Key path set successfully")
+        frappe.msgprint(_("Cert and Private Key path set successfully"))
     except Exception as e:
-        frappe.throw("Failed to set cert.pem path"+ str(e) ) 
+        frappe.throw(_("Failed to set cert.pem path"+ str(e) ) )
         
         
